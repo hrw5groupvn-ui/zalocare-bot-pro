@@ -36,7 +36,9 @@ function buildShareZip() {
     'start-bot.bat',
     'Cai-Dat-Va-Chay-Ngay.bat',
     'ZaloCare-App.vbs',
-    'README.md'
+    'ZaloCareMascot.exe',
+    'README.md',
+    'SKILL.md'
   ];
 
   for (const f of filesToCopy) {

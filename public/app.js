@@ -47,12 +47,12 @@ function switchTab(tabName) {
 
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.className =
-      'tab-btn flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/15';
+      'tab-btn flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/10';
   });
   const activeBtn = document.getElementById(`tabBtn-${tabName}`);
   if (activeBtn) {
     activeBtn.className =
-      'tab-btn flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all duration-150 bg-white text-zalo-600 shadow-md';
+      'tab-btn flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-lg transition-all duration-150 bg-white text-zalo-600 shadow-xs';
   }
 
   if (tabName === 'dashboard') loadDashboard();
@@ -1897,7 +1897,130 @@ async function runAutoReplySim(sendReal = false, forceAi = false) {
   await loadAutoReplyTab();
 }
 
+// ================= 10. ANIMATED 3D MASCOT WITH BELLY CLOCK =================
+let mascotState = {
+  emotion: 'happy', // 'happy' | 'ai_code' | 'excited' | 'sleepy'
+  manualOverrideUntil: 0,
+  colonVisible: true
+};
+
+function updateMascotBellyClock() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  mascotState.colonVisible = !mascotState.colonVisible;
+  const text = mascotState.colonVisible ? `${hh}:${mm}` : `${hh} ${mm}`;
+
+  const el1 = document.getElementById('cornerMascotClock');
+  const el2 = document.getElementById('miniMascotClock');
+  if (el1) el1.textContent = text;
+  if (el2) el2.textContent = text;
+}
+
+function getMascotFaceSvgMarkup(emotion) {
+  if (emotion === 'happy') {
+    // Original 3D happy eyes & mouth are already on /mascot-3d-happy.png
+    return '';
+  }
+  if (emotion === 'excited') {
+    return `
+      <polygon points="-55,-30 -47,-12 -27,-12 -43,0 -37,19 -55,7 -73,19 -67,0 -83,-12 -63,-12" fill="#facc15" stroke="#ffffff" stroke-width="3" />
+      <polygon points="55,-30 63,-12 83,-12 67,0 73,19 55,7 37,19 43,0 27,-12 47,-12" fill="#facc15" stroke="#ffffff" stroke-width="3" />
+      <path d="M -28 20 Q 0 46 28 20" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" />
+    `;
+  }
+  if (emotion === 'sleepy') {
+    return `
+      <path d="M -78 -6 Q -52 16 -26 -6" fill="none" stroke="#bae6fd" stroke-width="9" stroke-linecap="round" />
+      <path d="M 26 -6 Q 52 16 78 -6" fill="none" stroke="#bae6fd" stroke-width="9" stroke-linecap="round" />
+      <circle cx="0" cy="26" r="8" fill="#bae6fd" />
+      <text x="54" y="-36" font-family="Segoe UI, sans-serif" font-size="28" font-weight="800" fill="#7df9ff">Zzz</text>
+    `;
+  }
+  // 'ai_code' (>_ Terminal Face)
+  return `
+    <polyline points="-74,-24 -34,0 -74,24" fill="none" stroke="#7df9ff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+    <line x1="12" y1="24" x2="72" y2="24" stroke="#7df9ff" stroke-width="10" stroke-linecap="round" class="mascot-cursor-blink" />
+  `;
+}
+
+function applyMascotVisualState(emotion, bubbleText) {
+  const imgSrc = emotion === 'happy' ? '/mascot-3d-happy.png' : '/mascot-3d-base.png';
+  const img1 = document.getElementById('cornerMascot3dImg');
+  const img2 = document.getElementById('miniMascot3dImg');
+  if (img1) img1.setAttribute('href', imgSrc);
+  if (img2) img2.setAttribute('href', imgSrc);
+
+  const svgMarkup = getMascotFaceSvgMarkup(emotion);
+  const f1 = document.getElementById('cornerMascotFace');
+  const f2 = document.getElementById('miniMascotFace');
+  if (f1) f1.innerHTML = svgMarkup;
+  if (f2) f2.innerHTML = svgMarkup;
+
+  if (bubbleText) {
+    const b1 = document.getElementById('cornerMascotBubble');
+    const b2 = document.getElementById('miniMascotBubble');
+    if (b1) b1.textContent = bubbleText;
+    if (b2) b2.textContent = bubbleText;
+  }
+}
+
+function setMascotEmotion(emotion, customBubbleText = null) {
+  mascotState.emotion = emotion;
+  mascotState.manualOverrideUntil = Date.now() + 25000;
+
+  const defaultLabels = {
+    happy: '😊 Đang trực Zalo • Hoàn Phạm',
+    ai_code: '💻 AI đang trực & học giọng văn Zalo',
+    excited: '🎉 Sẵn sàng gửi thiệp chúc mừng VIP!',
+    sleepy: '😴 Đang tạm nghỉ ngơi...'
+  };
+  const bubbleText = customBubbleText || defaultLabels[emotion] || 'Zalo Care Bot • 24/7';
+  applyMascotVisualState(emotion, bubbleText);
+}
+
+function cycleMascotEmotion() {
+  const order = ['happy', 'ai_code', 'excited', 'sleepy'];
+  const nextIdx = (order.indexOf(mascotState.emotion) + 1) % order.length;
+  setMascotEmotion(order[nextIdx]);
+}
+
+function toggleMiniMascotOverlay(show) {
+  const overlay = document.getElementById('mascotMiniModeOverlay');
+  if (!overlay) return;
+  if (show) {
+    overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
+  } else {
+    overlay.classList.add('hidden');
+    overlay.classList.remove('flex');
+  }
+}
+
+async function minimizeAppToMascot() {
+  toggleMiniMascotOverlay(true);
+  try {
+    await fetch('/api/mascot/minimize', { method: 'POST' });
+    showToast('🤖 Đã thu nhỏ thành nhân vật Mascot 3D trên màn hình Desktop!');
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function pollMascotLiveStatus() {
+  try {
+    const res = await fetch('/api/mascot/status').then((r) => r.json());
+    if (Date.now() > mascotState.manualOverrideUntil && res.emotion) {
+      mascotState.emotion = res.emotion;
+      applyMascotVisualState(res.emotion, res.statusText || '');
+    }
+  } catch {}
+}
+
 // Initialize on load
 window.addEventListener('DOMContentLoaded', () => {
   loadDashboard();
+  updateMascotBellyClock();
+  setInterval(updateMascotBellyClock, 1000);
+  setInterval(pollMascotLiveStatus, 4500);
 });

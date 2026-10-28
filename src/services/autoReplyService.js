@@ -114,34 +114,41 @@ class AutoReplyService {
   }
 
   /**
-   * Match an incoming message string against active rules
+   * Match an incoming message string against active rules (strict whole-phrase accented matching)
    */
   matchRule(incomingText) {
     const cleanText = this.normalizeText(incomingText);
-    const strippedText = this.stripVietnameseTones(incomingText);
     if (!cleanText) return null;
+
+    // Immediately ignore casual family/colleague internal chat
+    const internalChatFilter = /\b(mày|tao|t chưa|nó đến|nó đấu|bố thỏ|mẹ thỏ|vợ|chồng|gửi bảo vệ|book ship|đợi ở sảnh|lấy xe|đi họp|mặc sơ mi)\b/i;
+    if (internalChatFilter.test(cleanText)) {
+      return null;
+    }
 
     const rules = db
       .getAutoReplyRules()
       .filter((r) => r.active !== false)
       .sort((a, b) => (Number(b.priority) || 0) - (Number(a.priority) || 0));
 
-    // 1. Check exact and contains rules first
+    const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // 1. Check exact and whole-phrase contains rules first (preserving Vietnamese accents so "nó đấu" never matches "ở đâu"!)
     for (const rule of rules) {
       if (rule.matchType === 'default_fallback') continue;
       const kwList = String(rule.keywords || '')
         .split(',')
         .map((k) => this.normalizeText(k))
-        .filter(Boolean);
+        .filter((k) => k.length >= 3);
 
       for (const kw of kwList) {
-        const strippedKw = this.stripVietnameseTones(kw);
         if (rule.matchType === 'exact') {
-          if (cleanText === kw || (strippedKw.length >= 4 && strippedText === strippedKw)) {
+          if (cleanText === kw) {
             return { rule, matchedKeyword: kw };
           }
         } else {
-          if (cleanText.includes(kw) || (strippedKw.length >= 4 && strippedText.includes(strippedKw))) {
+          const phraseRe = new RegExp(`(^|[\\s,.!?;:()"'])${escapeRegex(kw)}($|[\\s,.!?;:()"'])`, 'i');
+          if (phraseRe.test(cleanText)) {
             return { rule, matchedKeyword: kw };
           }
         }
@@ -249,17 +256,20 @@ class AutoReplyService {
       ruleName = rule.name;
       matchedKeyword = matchResult.matchedKeyword;
     } else if (aiConfig.enabled) {
-      // Cooldown check for AI replies per user (avoid rapid fire within 45s)
+      // Cooldown check for AI replies per user (avoid rapid fire within 60s)
       const aiCooldownKey = `${senderUid}_ai_reply`;
       const lastAiSent = this.cooldownMap.get(aiCooldownKey) || 0;
-      if (Date.now() - lastAiSent < 45 * 1000) return;
+      if (Date.now() - lastAiSent < 60 * 1000) return;
 
-      this.cooldownMap.set(aiCooldownKey, Date.now());
       const aiRes = await aiService.generateAiReply({
         customer,
         incomingText: content,
-        threadId: message.threadId
+        threadId: message.threadId,
+        isSimulator: false
       });
+      if (!aiRes || !aiRes.replyText) return;
+
+      this.cooldownMap.set(aiCooldownKey, Date.now());
       replyText = aiRes.replyText;
       ruleId = 'ai_brain';
       ruleName = aiRes.engine;
@@ -341,7 +351,8 @@ class AutoReplyService {
       const aiRes = await aiService.generateAiReply({
         customer,
         incomingText,
-        threadId: customer.zaloUid || customer.id
+        threadId: customer.zaloUid || customer.id,
+        isSimulator: !sendReal
       });
       replyText = aiRes.replyText;
       matchedKeyword = `${aiRes.engine} • ${aiRes.matchedContext}`;

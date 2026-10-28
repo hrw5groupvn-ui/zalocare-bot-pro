@@ -22,19 +22,23 @@
 
 ## 🌟 Tính năng nổi bật
 
-1. **🧠 Bộ Não AI Chăm Sóc Khách Hàng & Tự Học Giọng Văn Zalo (`aiService.js`)**:
-   - **📥 Quét & Học từ Lịch sử Tin nhắn Zalo (`requestOldMessages`)**: Tự động đọc các cuộc hội thoại gần đây trên Zalo của bạn, ghép cặp `[Khách hàng hỏi] ➔ [Cách bạn trả lời]` và phân tích thói quen xưng hô, từ ngữ cuối câu (*"nhé"*, *"ạ"*...) để nhại lại đúng phong cách của chủ tài khoản.
-   - **⚡ Tự học trực tiếp theo thời gian thực (`selfListen: true`)**: Mỗi khi bạn cầm điện thoại hoặc dùng Zalo PC nhắn tin trả lời khách, AI tự động ghi nhớ câu trả lời mới vào bộ nhớ hội thoại mẫu.
-   - **⏸️ Nhường quyền thông minh (`Human Takeover` - 30 phút)**: Tự động tạm dừng Bot ở cuộc trò chuyện mà bạn đang trực tiếp cầm máy nhắn tin để không làm gián đoạn cuộc trao đổi thật.
-   - **Đa tầng Trí tuệ Nhân tạo**: Tích hợp sẵn **AI Học Giọng Văn Nội Bộ (`Smart Local RAG` - miễn phí 100%, không cần API Key)** cùng khả năng kết nối **Google Gemini (`gemini-2.0-flash`)** và **OpenAI (`gpt-4o-mini`)** kèm Kho Kiến thức Doanh nghiệp (`Knowledge Base`).
-2. **🤖 Tin nhắn Trả lời Tự động (`autoReplyService.js`)**:
-   - Phản hồi tự động 24/7 theo kịch bản từ khóa (không phân biệt hoa thường, dấu tiếng Việt) kết hợp mượt mà với Bộ não AI (`Hybrid` hoặc `AI Toàn quyền`).
-3. **🎨 Tự động thiết kế & xuất Thiệp Chúc Mừng Luxury in Logo thương hiệu (`1200x675 PNG`)**:
+1. **🤖 Nhân vật Hoạt hình Mascot 3D Nổi trên Desktop & Đồng hồ `HH:mm` ở Bụng (`ZaloCareMascot.exe`)**:
+   - **Thu nhỏ App thành Nhân vật 3D**: Khi bấm nút `🤖 Thu nhỏ Mascot` hoặc thu gọn ứng dụng, phần mềm biến thành nhân vật **Robot 3D Zalo Care Bot** bay lơ lửng (`30 FPS`, nền trong suốt 100% qua Win32 `UpdateLayeredWindow`) ngay ở góc màn hình Windows Desktop.
+   - **Đồng hồ Điện tử 3D `HH:mm` ở bụng**: Màn hình LED bo tròn phát sáng ngay trước bụng nhân vật hiển thị trực tiếp **Giờ : Phút** thời gian thực.
+   - **Biểu cảm Khuôn mặt 3D động theo Trạng thái**: Tự động chớp mắt và thay đổi cảm xúc khuôn mặt (`^ ^` Vui vẻ 3D, `>_` AI Code, `★ ★` Hào hứng chúc mừng, `Zzz` Tạm nghỉ) theo trạng thái hoạt động của Bot. Hỗ trợ kéo thả tự do, click đơn để đổi cảm xúc, click đúp để mở lại cửa sổ chính.
+2. **🧠 Bộ Não AI Chăm Sóc Khách Hàng & Tự Học Giọng Văn Zalo (`aiService.js`)**:
+   - **🛡️ Bộ lọc Bảo vệ Tin nhắn Cá nhân (`onlyReplyBusinessIntent`)**: Tự động phân biệt câu hỏi dịch vụ/báo giá của khách hàng với tin nhắn trò chuyện gia đình/bạn bè/đồng nghiệp — **giữ im lặng 100% trước tin nhắn cá nhân** để không bao giờ trả lời nhầm.
+   - **📥 Quét & Học từ Lịch sử Tư vấn Zalo (`requestOldMessages`)**: Tự động lọc các hội thoại tư vấn nghiệp vụ trên Zalo để học phong cách xưng hô, từ ngữ quen dùng (*"Dạ"*, *"nhé"*, *"ạ"*...) của chủ tài khoản.
+   - **⏸️ Nhường quyền thông minh (`Human Takeover` - 60 phút)**: Tự động tạm dừng Bot ở cuộc trò chuyện mà bạn đang trực tiếp cầm máy nhắn tin.
+   - **Đa tầng Trí tuệ Nhân tạo**: Tích hợp sẵn **AI Học Giọng Văn Nội Bộ (`Smart Local RAG` - miễn phí 100%, không cần API Key)** cùng khả năng kết nối **Google Gemini (`gemini-2.5-flash`)** và **OpenAI (`gpt-4o-mini`)** kèm Kho Kiến thức Doanh nghiệp (`Knowledge Base`).
+3. **💬 Tin nhắn Trả lời Tự động Chính xác (`autoReplyService.js`)**:
+   - Phản hồi tự động 24/7 theo kịch bản từ khóa nguyên cụm có dấu tiếng Việt kết hợp mượt mà với Bộ não AI.
+4. **🎨 Tự động thiết kế & xuất Thiệp Chúc Mừng Luxury in Logo thương hiệu (`1200x675 PNG`)**:
    - 9 chủ đề thiệp sang trọng (bao gồm 4 mẫu **Luxury Edition**: *Đen Kim Hoàng Gia*, *Trắng Ngọc Trai & Vàng Champagne*, *Xanh Navy Hoàng Gia*, *Đỏ Nhung Quý Tộc*).
-4. **👥 Đồng bộ Danh bạ Bạn bè & Ngày sinh trực tiếp từ Zalo**:
+5. **👥 Đồng bộ Danh bạ Bạn bè & Ngày sinh trực tiếp từ Zalo**:
    - Quét toàn bộ danh sách bạn bè Zalo Cá nhân, tự động nhận diện Giới tính (`Nam`/`Nữ`), Xưng hô (`Anh`/`Chị`), Ngày sinh và ảnh đại diện.
-5. **💿 Đóng gói Ứng dụng Windows Desktop & Bộ Cài Đặt Độc Lập (`Zalo-Care-Bot-Setup.exe`)**:
-   - Khởi chạy ở chế độ cửa sổ ứng dụng độc lập (`ZaloCare-App.vbs`) kèm biểu tượng **Zalo Care Bot** ngoài màn hình Desktop và trình cài đặt `.EXE` giao diện tiếng Việt (`buildInstallerExe.js`).
+6. **💿 Đóng gói Ứng dụng Windows Desktop & Bộ Cài Đặt Độc Lập (`Zalo-Care-Bot-Setup.exe`)**:
+   - Khởi chạy ở chế độ cửa sổ ứng dụng độc lập (`ZaloCare-App.vbs`) kèm nhân vật `ZaloCareMascot.exe`, biểu tượng **Zalo Care Bot** ngoài màn hình Desktop và trình cài đặt `.EXE` giao diện tiếng Việt (`buildInstallerExe.js`).
 
 ---
 

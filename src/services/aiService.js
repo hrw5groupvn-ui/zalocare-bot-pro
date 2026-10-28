@@ -4,7 +4,7 @@ const { buildVariables, renderText } = require('./personalizer');
 
 function getDefaultAiConfig() {
   return {
-    enabled: true,
+    enabled: false, // Mặc định TẮT tự động gửi để tránh gửi nhầm cho tin nhắn cá nhân khi chưa cấu hình
     provider: 'auto', // 'auto' (Gemini/OpenAI if key present, else Smart Local RAG) | 'gemini' | 'openai' | 'local_rag'
     geminiApiKey: process.env.GEMINI_API_KEY || '',
     geminiModel: 'gemini-2.5-flash',
@@ -12,7 +12,8 @@ function getDefaultAiConfig() {
     openaiBaseUrl: 'https://api.openai.com/v1',
     openaiModel: 'gpt-4o-mini',
     autoLearnFromZalo: true,
-    humanTakeoverMinutes: 30, // Pause AI for 30 mins in a thread if the human owner manually replies
+    onlyReplyBusinessIntent: true, // Chỉ trả lời khi tin nhắn thực sự hỏi về dịch vụ/CSKH, tuyệt đối im lặng với chat cá nhân
+    humanTakeoverMinutes: 60, // Tạm dừng AI 60 phút trong hội thoại nếu bạn vừa trực tiếp nhắn tin
     replyPriority: 'ai_after_keywords', // 'ai_first' | 'ai_after_keywords'
     systemPersona:
       'Bạn là Trợ lý Chăm sóc Khách hàng & Tư vấn Thiết kế của Bản Việt Design (đại diện cho anh Hoàn Phạm). Phong cách giao tiếp: Lịch sự, ấm áp, chuyên nghiệp, tôn trọng khách hàng, xưng hô chuẩn mực theo danh xưng ({xung_ho} {ten} - xưng {xung_em}), câu văn ngắn gọn, tự nhiên như người thật đang nhắn tin trên Zalo, không dùng văn phong máy móc.',
@@ -254,6 +255,62 @@ class AiService {
   }
 
   /**
+   * Check if a conversation pair is genuinely related to Customer Care / Business Service
+   * (Prevents learning casual family/friend/colleague chats like "A đang ở nhà", "Lag gòy", "Sơ mi trắng")
+   */
+  isGenuineBusinessCustomerPair(customerText, ownerReply) {
+    const q = String(customerText || '').normalize('NFC').trim().toLowerCase();
+    const a = String(ownerReply || '').normalize('NFC').trim().toLowerCase();
+
+    if (q.length < 12 || a.length < 20) return false;
+
+    // Exclude casual/family/internal colleague chat markers
+    const casualMarkers = [
+      'bố thỏ', 'mẹ thỏ', 'lag', 'buồn ngủ', 'vợ', 'chồng', 'mày', 'tao', 't chưa',
+      'đag đâu', 'đang ở nhà', 'ở sảnh', 'lấy xe', 'mặc sơ mi', 'đi họp', 'bảo vệ', 'book ship'
+    ];
+    if (casualMarkers.some((m) => q.includes(m) || a.includes(m))) {
+      return false;
+    }
+
+    // Must contain clear business / customer-care domain keywords
+    const businessPhrases = [
+      'thiết kế', 'thi công', 'nội thất', 'kiến trúc', 'báo giá', 'bảng giá', 'đơn giá',
+      'chi phí', 'khảo sát', 'hợp đồng', 'biệt thự', 'nhà phố', 'căn hộ', 'chung cư',
+      'bản vẽ', 'phối cảnh', 'bảo hành', 'tư vấn', 'lịch hẹn', 'cảm ơn', 'chúc mừng', 'thiệp'
+    ];
+
+    return businessPhrases.some((kw) => q.includes(kw));
+  }
+
+  /**
+   * Check if an incoming Zalo message is a genuine Customer Care inquiry
+   * (Returns false for personal/family/colleague conversations so the Bot stays completely silent)
+   */
+  hasClearCustomerCareIntent(incomingText) {
+    const text = String(incomingText || '').normalize('NFC').trim().toLowerCase();
+    if (!text || text.length < 6) return false;
+
+    // 1. Immediate block for casual/family/internal colleague chat expressions
+    const personalOrInternalPatterns = [
+      /\b(mày|tao|t chưa|bố thỏ|mẹ thỏ|vợ|chồng|con gái|con trai|ngủ|ăn cơm|đi nhậu|cafe không)\b/i,
+      /\b(nó đến|nó đấu|gửi bảo vệ|book ship|đợi ở sảnh|lấy xe|đi họp|mặc sơ mi)\b/i
+    ];
+    if (personalOrInternalPatterns.some((re) => re.test(text))) {
+      return false;
+    }
+
+    // 2. Must contain clear customer inquiry phrases (accented whole phrases)
+    const customerIntentPatterns = [
+      /\b(báo giá|bảng giá|đơn giá|giá thiết kế|giá thi công|giá bao nhiêu|bao nhiêu 1m2|chi phí thiết kế|chi phí thi công)\b/i,
+      /\b(tư vấn thiết kế|tư vấn nội thất|tư vấn kiến trúc|nhận thiết kế|nhận thi công|thi công trọn gói|thiết kế nội thất|thiết kế nhà|thiết kế biệt thự|thiết kế căn hộ)\b/i,
+      /\b(qua khảo sát|lịch khảo sát|hẹn khảo sát|đặt lịch hẹn|bảo hành|mã ưu đãi|voucher|cảm ơn.*thiệp|thiệp đẹp)\b/i
+    ];
+
+    return customerIntentPatterns.some((re) => re.test(text));
+  }
+
+  /**
    * Record and learn from real-time Zalo messages (both Customer incoming and Owner's manual outgoing replies)
    */
   observeRealTimeZaloMessage(message) {
@@ -288,7 +345,11 @@ class AiService {
         const cfg = this.getConfig();
         if (cfg.autoLearnFromZalo !== false) {
           const prevCustomerMsg = this.lastCustomerMsgMap.get(threadId);
-          if (prevCustomerMsg && Date.now() - prevCustomerMsg.timestamp < 12 * 3600 * 1000) {
+          if (
+            prevCustomerMsg &&
+            Date.now() - prevCustomerMsg.timestamp < 12 * 3600 * 1000 &&
+            this.isGenuineBusinessCustomerPair(prevCustomerMsg.text, text)
+          ) {
             const cust = db.getCustomers().find((c) => String(c.zaloUid) === threadId);
             const cName = cust ? `${cust.salutation || ''} ${cust.fullName}`.trim() : prevCustomerMsg.customerName;
             this.addLearnedPair({
@@ -297,7 +358,7 @@ class AiService {
               customerName: cName,
               source: 'zalo_realtime'
             });
-            console.log(`[AI Learner] Đã tự học câu trả lời mới của bạn với ${cName}!`);
+            console.log(`[AI Learner] Đã tự học câu trả lời nghiệp vụ CSKH mới của bạn với ${cName}!`);
           }
         }
       }
@@ -335,7 +396,7 @@ class AiService {
           resolve({
             learnedCount: 0,
             scannedCount: 0,
-            message: 'Đã bật chế độ tự động lắng nghe & học trực tiếp mỗi khi bạn nhắn tin trên Zalo!'
+            message: 'Đã bật chế độ tự động lắng nghe & học trực tiếp các hội thoại tư vấn khách hàng trên Zalo!'
           });
         }
       }, 5500);
@@ -381,7 +442,11 @@ class AiService {
           for (let i = 0; i < threadMsgs.length - 1; i++) {
             const cur = threadMsgs[i];
             const next = threadMsgs[i + 1];
-            if (!cur.isSelf && next.isSelf && cur.text.length >= 2 && next.text.length >= 4) {
+            if (
+              !cur.isSelf &&
+              next.isSelf &&
+              this.isGenuineBusinessCustomerPair(cur.text, next.text)
+            ) {
               const added = this.addLearnedPair(
                 {
                   customerText: cur.text,
@@ -403,7 +468,7 @@ class AiService {
           learnedCount,
           scannedCount: list.length,
           threadsCount: byThread.size,
-          message: `Đã quét ${list.length} tin nhắn gần đây trên Zalo và trích xuất thêm ${learnedCount} mẫu đối thoại thực tế của bạn!`
+          message: `Đã quét ${list.length} tin nhắn gần đây (lọc bỏ toàn bộ chat cá nhân) và trích xuất ${learnedCount} mẫu tư vấn nghiệp vụ thực tế!`
         });
       };
 
@@ -439,7 +504,7 @@ class AiService {
     if (replies.some((r) => /nhé|nha\b/i.test(r))) commonOpeners.push('từ cuối câu thân thiện ("nhé", "ạ")');
     if (replies.some((r) => /em\b/i.test(r))) commonOpeners.push('xưng "em"');
 
-    const summary = `Đã học từ ${pairs.length} mẫu hội thoại của bạn • Độ dài câu trung bình ~${avgLen} ký tự • Đặc trưng văn phong: ${
+    const summary = `Đã học từ ${pairs.length} mẫu hội thoại tư vấn • Độ dài câu trung bình ~${avgLen} ký tự • Đặc trưng văn phong: ${
       commonOpeners.length ? commonOpeners.join(', ') : 'Lịch sự, rõ ràng, trọng tâm'
     }.`;
 
@@ -447,24 +512,32 @@ class AiService {
   }
 
   /**
-   * Tokenize & strip Vietnamese tones for similarity scoring (RAG retrieval)
+   * Tokenize preserving Vietnamese accents and removing common conversational stopwords
+   * (Prevents false matches like "đáng yêu" matching "đang ở nhà" or "gửi nhé" matching random chats!)
    */
-  tokenizeNormalized(str) {
+  tokenizeMeaningfulWords(str) {
+    const stopwords = new Set([
+      'anh', 'chị', 'em', 'mình', 'bạn', 'tôi', 'tớ', 'cô', 'chú', 'bác', 'các', 'những',
+      'đang', 'đáng', 'nhà', 'gửi', 'nhé', 'nha', 'vâng', 'dạ', 'không', 'chưa', 'rồi',
+      'làm', 'gì', 'cho', 'của', 'với', 'đây', 'đó', 'thế', 'vậy', 'luôn', 'mà', 'thì',
+      'là', 'và', 'hay', 'hoặc', 'một', 'cái', 'con', 'người', 'thôi', 'này', 'kia',
+      'bên', 'giúp', 'ơi', 'ạ', 'nhỉ', 'hả', 'ah', 'ak', 'uh', 'ừ', 'ok', 'oke', 'được',
+      'có', 'lại', 'qua', 'lên', 'xuống', 'vào', 'ra', 'trong', 'ngoài', 'trên', 'dưới',
+      'khi', 'nào', 'sao', 'như', 'rất', 'lắm', 'quá', 'hơn', 'nhất', 'cũng', 'vẫn', 'đã', 'sẽ'
+    ]);
+
     return String(str || '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/đ/g, 'd')
-      .replace(/Đ/g, 'D')
+      .normalize('NFC')
       .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/[.,!?;:()"'“”‘’\[\]{}\/\\|~`@#$%^&*+=<>😂😁🥰👋🎁✨📞⏰🙏❤️]/g, ' ')
       .split(/\s+/)
-      .filter((w) => w.length >= 2);
+      .filter((w) => w.length >= 2 && !stopwords.has(w));
   }
 
   computeSimilarity(queryText, targetText) {
-    const qTokens = this.tokenizeNormalized(queryText);
-    const tTokens = this.tokenizeNormalized(targetText);
-    if (!qTokens.length || !tTokens.length) return 0;
+    const qTokens = this.tokenizeMeaningfulWords(queryText);
+    const tTokens = this.tokenizeMeaningfulWords(targetText);
+    if (qTokens.length < 2 || tTokens.length < 2) return 0;
 
     const tSet = new Set(tTokens);
     let matches = 0;
@@ -472,10 +545,12 @@ class AiService {
       if (tSet.has(w)) matches++;
     }
 
-    // Bonus for substring match
+    // Require at least 2 meaningful domain words to match
+    if (matches < 2) return 0;
+
     const qNorm = qTokens.join(' ');
     const tNorm = tTokens.join(' ');
-    const phraseBonus = tNorm.includes(qNorm) || qNorm.includes(tNorm) ? 0.35 : 0;
+    const phraseBonus = qNorm.length >= 8 && (tNorm.includes(qNorm) || qNorm.includes(tNorm)) ? 0.25 : 0;
 
     return matches / Math.sqrt(qTokens.length * tTokens.length) + phraseBonus;
   }
@@ -496,7 +571,7 @@ class AiService {
     const scoredDocs = docs
       .map((d) => ({
         doc: d,
-        score: this.computeSimilarity(incomingText, `${d.title} ${d.topic} ${d.content}`)
+        score: this.computeSimilarity(incomingText, `${d.title} ${d.content}`)
       }))
       .sort((a, b) => b.score - a.score);
 
@@ -510,14 +585,36 @@ class AiService {
    * Generate intelligent, style-matched customer care response using:
    * 1) Google Gemini API (if configured)
    * 2) OpenAI / Compatible API (if configured)
-   * 3) Built-in Smart Local RAG & Few-Shot Style Cloner (always works out of the box!)
+   * 3) Built-in Smart Local RAG (ONLY replies when high-confidence Customer Care intent matches!)
    */
-  async generateAiReply({ customer, incomingText, threadId = '' }) {
+  async generateAiReply({ customer, incomingText, threadId = '', isSimulator = false }) {
     const cfg = this.getConfig();
     const settings = db.getSettings();
     const vars = buildVariables({ customer, template: {}, settings, holidayName: '' });
 
+    // Safety Gate for Real Zalo Messages:
+    // If onlyReplyBusinessIntent is enabled (default true) and this is a real Zalo message,
+    // immediately ignore casual/personal/colleague messages so the Bot NEVER sends meaningless replies!
+    const isClearBusinessIntent = this.hasClearCustomerCareIntent(incomingText);
     const { topPairs, topDocs } = this.retrieveContext(incomingText);
+
+    // Only allow curated/approved pairs ('preset' or 'manual') for direct template matching
+    const curatedPairs = topPairs.filter(
+      (x) => x.pair.source === 'preset' || x.pair.source === 'manual'
+    );
+    const bestCuratedPair = curatedPairs[0];
+
+    if (!isSimulator && cfg.onlyReplyBusinessIntent !== false) {
+      const hasStrongCuratedMatch = bestCuratedPair && bestCuratedPair.score >= 0.55;
+      if (!isClearBusinessIntent && !hasStrongCuratedMatch) {
+        return {
+          replyText: '',
+          engine: 'AI Bộ Lọc An Toàn (Im lặng trước tin nhắn cá nhân)',
+          matchedContext: 'Bỏ qua tin nhắn không phải hỏi dịch vụ CSKH'
+        };
+      }
+    }
+
     const threadHistory = (threadId && this.threadHistoryMap.get(String(threadId))) || [];
 
     const useGemini =
@@ -535,7 +632,7 @@ class AiService {
       settings,
       customer,
       vars,
-      topPairs,
+      topPairs: curatedPairs,
       topDocs,
       threadHistory
     });
@@ -548,11 +645,11 @@ class AiService {
           systemPrompt,
           userMessage: incomingText
         });
-        if (reply) {
+        if (reply && reply.trim() !== 'SKIP') {
           return {
             replyText: renderText(reply, vars),
             engine: `Google Gemini (${cfg.geminiModel || 'gemini-2.5-flash'})`,
-            matchedContext: topPairs[0] && topPairs[0].score > 0.2 ? topPairs[0].pair.customerText : 'AI Tư duy ngữ cảnh'
+            matchedContext: bestCuratedPair && bestCuratedPair.score > 0.35 ? bestCuratedPair.pair.customerText : 'AI Tư duy ngữ cảnh'
           };
         }
       } catch (err) {
@@ -569,11 +666,11 @@ class AiService {
           systemPrompt,
           userMessage: incomingText
         });
-        if (reply) {
+        if (reply && reply.trim() !== 'SKIP') {
           return {
             replyText: renderText(reply, vars),
             engine: `OpenAI (${cfg.openaiModel || 'gpt-4o-mini'})`,
-            matchedContext: topPairs[0] && topPairs[0].score > 0.2 ? topPairs[0].pair.customerText : 'AI Tư duy ngữ cảnh'
+            matchedContext: bestCuratedPair && bestCuratedPair.score > 0.35 ? bestCuratedPair.pair.customerText : 'AI Tư duy ngữ cảnh'
           };
         }
       } catch (err) {
@@ -581,12 +678,14 @@ class AiService {
       }
     }
 
-    // Built-in Smart Local RAG & Style Cloner (Zero external API key needed!)
+    // Built-in Smart Local RAG (Strict matching — never guesses or sends random messages!)
     const localResult = this.buildLocalSmartRagReply({
       incomingText,
       vars,
-      topPairs,
-      topDocs
+      curatedPairs,
+      topDocs,
+      isClearBusinessIntent,
+      isSimulator
     });
 
     return localResult;
@@ -621,7 +720,7 @@ THÔNG TIN KHÁCH HÀNG ĐANG TRÒ CHUYỆN:
 ĐẶC TRƯNG GIỌNG VĂN CỦA BẠN (HÃY BẮT CHƯỚC Y HỆT PHONG CÁCH NÀY):
 ${cfg.learnedStyleSummary || ''}
 
-CÁC MẪU HỘI THOẠI THỰC TẾ BẠN ĐÃ TỪNG TRẢ LỜI TRÊN ZALO:
+CÁC MẪU HỘI THOẠI TƯ VẤN CHUẨN:
 ${examplesText}
 
 KIẾN THỨC DỊCH VỤ CỦA DOANH NGHIỆP:
@@ -629,7 +728,8 @@ ${kbText}
 
 ${historyText ? `LỊCH SỬ TRÒ CHUYỆN GẦN ĐÂY VỚI KHÁCH NÀY:\n${historyText}\n` : ''}
 YÊU CẦU QUAN TRỌNG:
-- Chỉ viết nội dung tin nhắn trả lời trực tiếp cho khách hàng trên Zalo (ngắn gọn 2-4 câu, tự nhiên, chân thành như người thật đang gõ phím).
+- Nếu tin nhắn của người gửi là chuyện gia đình/cá nhân/đồng nghiệp nội bộ không liên quan đến tư vấn dịch vụ của doanh nghiệp, hãy trả về đúng từ: SKIP
+- Nếu là khách hàng hỏi dịch vụ, chỉ viết nội dung tin nhắn trả lời trực tiếp (ngắn gọn 2-4 câu, tự nhiên, chân thành như người thật đang gõ phím).
 - Luôn xưng "${vars.xung_em}" và gọi khách là "${vars.xung_ho_thuong} ${vars.ten}" hoặc "${vars.xung_ho} ${vars.ten}".`;
   }
 
@@ -652,7 +752,7 @@ YÊU CẦU QUAN TRỌNG:
           }
         ],
         generationConfig: {
-          temperature: 0.55,
+          temperature: 0.4,
           maxOutputTokens: 350
         }
       })
@@ -682,7 +782,7 @@ YÊU CẦU QUAN TRỌNG:
       },
       body: JSON.stringify({
         model,
-        temperature: 0.55,
+        temperature: 0.4,
         max_tokens: 350,
         messages: [
           { role: 'system', content: systemPrompt },
@@ -700,25 +800,26 @@ YÊU CẦU QUAN TRỌNG:
   }
 
   /**
-   * Smart Local RAG & Style Cloner fallback (works offline/without external API keys)
+   * Smart Local RAG & Style Cloner fallback
+   * STRICT MODE: Never replays raw personal Zalo chats and never replies to non-business messages!
    */
-  buildLocalSmartRagReply({ incomingText, vars, topPairs, topDocs }) {
-    const bestPair = topPairs[0];
-    const bestDoc = topDocs[0];
+  buildLocalSmartRagReply({ incomingText, vars, curatedPairs, topDocs, isClearBusinessIntent, isSimulator }) {
+    const bestPair = curatedPairs && curatedPairs[0];
+    const bestDoc = topDocs && topDocs[0];
 
-    // 1. If a learned pair from the owner's Zalo matches closely, adapt it with the current customer's salutation & name!
-    if (bestPair && bestPair.score >= 0.26) {
+    // 1. Only match curated/approved Q&A templates with high confidence (>= 0.50)
+    if (bestPair && bestPair.score >= 0.50) {
       let adapted = bestPair.pair.ownerReply;
       adapted = renderText(adapted, vars);
       return {
         replyText: adapted,
-        engine: 'AI Học Giọng Văn Nội Bộ (Khớp mẫu câu của bạn)',
-        matchedContext: `Học từ câu: "${bestPair.pair.customerText}"`
+        engine: 'AI Học Giọng Văn (Mẫu câu Tư vấn đã duyệt)',
+        matchedContext: `Khớp câu hỏi: "${bestPair.pair.customerText}"`
       };
     }
 
-    // 2. If a Knowledge Base document matches the customer's question, synthesize a natural response in the owner's tone
-    if (bestDoc && bestDoc.score >= 0.16) {
+    // 2. Only match Knowledge Base if the message has clear business customer intent AND matches topic
+    if (isClearBusinessIntent && bestDoc && bestDoc.score >= 0.25) {
       const kbContent = renderText(bestDoc.doc.content, vars);
       const reply = `Dạ chào ${vars.xung_ho} ${vars.ten} ạ! Về nội dung ${vars.xung_ho_thuong} đang quan tâm, ${vars.xung_em} xin chia sẻ thông tin từ ${vars.ten_thuong_hieu} như sau ạ:\n\n✨ ${kbContent}\n\n${vars.xung_ho} ${vars.ten} cần tư vấn chi tiết hơn về hạng mục nào cứ nhắn để ${vars.xung_em} hỗ trợ ngay nhé!`;
       return {
@@ -728,20 +829,29 @@ YÊU CẦU QUAN TRỌNG:
       };
     }
 
-    // 3. Conversational greeting / general inquiry handling in owner's warm style
-    const norm = this.tokenizeNormalized(incomingText).join(' ');
-    if (/\b(alo|chao|hi|hello|shop|em oi|anh oi|co ai)\b/.test(norm)) {
+    // 3. If it has clear business intent (e.g. asking about price/design), send polite business reception
+    if (isClearBusinessIntent) {
       return {
-        replyText: `Dạ ${vars.xung_em} chào ${vars.xung_ho} ${vars.ten} ạ! 👋 Không biết hôm nay ${vars.xung_ho_thuong} ${vars.ten} đang cần ${vars.xung_em} và ${vars.ten_thuong_hieu} tư vấn hay hỗ trợ thông tin gì ạ?`,
-        engine: 'AI Giao Tiếp Tự Nhiên',
-        matchedContext: 'Chào hỏi & Mở đầu hội thoại'
+        replyText: `Dạ chào ${vars.xung_ho} ${vars.ten} ạ! 👋 ${vars.xung_em} đã nhận được yêu cầu tư vấn của ${vars.xung_ho_thuong}. ${vars.xung_em} xin phép kiểm tra và gửi thông tin chi tiết đến ${vars.xung_ho_thuong} ${vars.ten} ngay trong ít phút nữa nhé!`,
+        engine: 'AI Chăm Sóc Khách Hàng',
+        matchedContext: 'Tiếp nhận yêu cầu tư vấn dịch vụ'
       };
     }
 
+    // 4. For Simulator testing on Web UI: explain clearly that the Bot stays silent on non-business chat
+    if (isSimulator) {
+      return {
+        replyText: `[Chế độ Bảo vệ An toàn]: Tin nhắn "${incomingText}" là trò chuyện thông thường (không phải câu hỏi tư vấn dịch vụ/báo giá), nên Bot sẽ GIỮ IM LẶNG trên Zalo thật để không làm phiền cuộc trò chuyện cá nhân của bạn.`,
+        engine: 'AI Bộ Lọc An Toàn (Chống gửi nhầm)',
+        matchedContext: 'Tự động im lặng trước tin nhắn cá nhân'
+      };
+    }
+
+    // 5. On real Zalo: return empty string so Bot stays 100% silent on personal/casual chats!
     return {
-      replyText: `Dạ ${vars.xung_em} đã nhận được tin nhắn của ${vars.xung_ho_thuong} ${vars.ten} ạ! ${vars.xung_em} xin phép kiểm tra thông tin chi tiết và phản hồi lại ${vars.xung_ho_thuong} ${vars.ten} ngay trong ít phút nữa nhé. Nếu cần trao đổi gấp, ${vars.xung_ho_thuong} có thể gọi trực tiếp giúp ${vars.xung_em} qua số ${vars.sdt_hotline} ạ! 🙏`,
-      engine: 'AI Chăm Sóc Khách Hàng',
-      matchedContext: 'Phản hồi tiếp nhận thông minh'
+      replyText: '',
+      engine: 'AI Bộ Lọc An Toàn',
+      matchedContext: 'Im lặng trước tin nhắn cá nhân'
     };
   }
 }

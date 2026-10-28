@@ -48,10 +48,12 @@ async function generateUiPreview() {
     <text x="106" y="64" font-family="Segoe UI, sans-serif" font-size="13" fill="#dbeafe">Hệ thống tự động gửi Thiệp chúc mừng Sinh nhật, Lễ Tết &amp; Trợ lý AI Tự học Giọng văn CSKH</text>
 
     <!-- Header Action Buttons -->
-    <rect x="980" y="24" width="190" height="38" rx="10" fill="#34d399"/>
-    <text x="1075" y="48" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#0f172a">🔄 Đồng bộ Danh bạ Zalo</text>
-    <rect x="1184" y="24" width="176" height="38" rx="10" fill="#ffffff"/>
-    <text x="1272" y="48" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#0068FF">⚙️ Cấu hình Zalo</text>
+    <rect x="810" y="24" width="175" height="38" rx="10" fill="#34d399"/>
+    <text x="897" y="48" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#0f172a">🔄 Đồng bộ Danh bạ</text>
+    <rect x="995" y="24" width="180" height="38" rx="10" fill="#fbbf24"/>
+    <text x="1085" y="48" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12.5" font-weight="800" fill="#0f172a">🤖 Thu nhỏ Mascot 3D</text>
+    <rect x="1185" y="24" width="175" height="38" rx="10" fill="#ffffff"/>
+    <text x="1272" y="48" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#0068FF">⚙️ Cấu hình Zalo</text>
 
     <!-- 7 Navigation Tiles -->
     <g transform="translate(40, 82)">
@@ -162,6 +164,17 @@ async function generateUiPreview() {
       <text x="1070" y="182" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" fill="#e2e8f0">Chúc Anh tuổi mới dồi dào sức khỏe, hạnh phúc và thành công rực rỡ!</text>
       <rect x="960" y="212" width="220" height="36" rx="18" fill="#d4af37"/>
       <text x="1070" y="235" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" font-weight="800" fill="#0b0e17">🎁 MÃ ƯU ĐÃI: HPBD-VIP</text>
+    </g>
+
+    <!-- Floating 3D Mascot with Belly Clock at Bottom-Right Corner -->
+    <g transform="translate(1205, 650)">
+      <rect x="-15" y="-26" width="190" height="28" rx="14" fill="#ffffff" stroke="#0068FF" stroke-width="2"/>
+      <circle cx="-1" cy="-12" r="4.5" fill="#10b981"/>
+      <text x="85" y="-8" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#0f172a">Đang trực Zalo 24/7</text>
+      <ellipse cx="85" cy="202" rx="45" ry="8" fill="#0f172a" opacity="0.28"/>
+      <image href="data:image/png;base64,${mascot3dB64}" x="-5" y="4" width="185" height="185"/>
+      <rect x="55" y="114" width="52" height="24" rx="9" fill="#061844" stroke="#7df9ff" stroke-width="2"/>
+      <text x="81" y="130" text-anchor="middle" font-family="Consolas, monospace" font-size="11.5" font-weight="800" fill="#a5f3fc">21:10</text>
     </g>
   </svg>`;
 

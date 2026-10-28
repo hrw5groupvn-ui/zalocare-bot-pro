@@ -6,7 +6,8 @@ const sharp = require('sharp');
 const ROOT_DIR = path.join(__dirname, '..', '..');
 const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
 const LOGO_PATH = path.join(PUBLIC_DIR, 'logo-app.png');
-const ICO_PATH = path.join(PUBLIC_DIR, 'app-icon.ico');
+const ICO_PATH = path.join(PUBLIC_DIR, 'zalo-care-bot-icon.ico');
+const LEGACY_ICO_PATH = path.join(PUBLIC_DIR, 'app-icon.ico');
 const FAVICON_PATH = path.join(PUBLIC_DIR, 'favicon.png');
 const MANIFEST_PATH = path.join(PUBLIC_DIR, 'manifest.json');
 const VBS_LAUNCHER_PATH = path.join(ROOT_DIR, 'ZaloCare-App.vbs');
@@ -67,6 +68,7 @@ async function run() {
 
   const icoBuf = buildIcoFromPngBuffers(pngItems);
   fs.writeFileSync(ICO_PATH, icoBuf);
+  fs.writeFileSync(LEGACY_ICO_PATH, icoBuf);
   fs.writeFileSync(FAVICON_PATH, pngItems.find((x) => x.size === 64).buf);
   console.log('✅ Đã tạo icon ứng dụng Zalo Care Bot:', ICO_PATH);
 
@@ -120,7 +122,12 @@ If Not isRunning Then
   WScript.Sleep 2000
 End If
 
-' 3. Open in Standalone Desktop App Mode (Edge or Chrome App Window without address bar)
+' 3. Start Animated Desktop Mascot (if built)
+If fso.FileExists(appDir & "\\ZaloCareMascot.exe") Then
+  WshShell.Run """" & appDir & "\\ZaloCareMascot.exe""", 1, False
+End If
+
+' 4. Open in Standalone Desktop App Mode (Edge or Chrome App Window without address bar)
 On Error Resume Next
 Err.Clear
 WshShell.Run "msedge.exe --app=http://localhost:3088 --window-size=1400,880", 1, False
@@ -151,6 +158,8 @@ On Error GoTo 0
 
   const finalDesktopLnk = path.join(desktopDir, 'Zalo Care Bot.lnk');
   const finalStartLnk = path.join(startMenuDir, 'Zalo Care Bot.lnk');
+  if (fs.existsSync(finalDesktopLnk)) fs.unlinkSync(finalDesktopLnk);
+  if (fs.existsSync(finalStartLnk)) fs.unlinkSync(finalStartLnk);
 
   const psScript = `
 $WshShell = New-Object -ComObject WScript.Shell
@@ -169,6 +178,17 @@ $s2.WorkingDirectory = '${ROOT_DIR}'
 $s2.IconLocation = '${ICO_PATH},0'
 $s2.Description = 'Zalo Care Bot - Chuc mung Sinh nhat, Le Tet & Tro ly AI CSKH'
 $s2.Save()
+
+Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public class ShellIconRefresh {
+    [DllImport("shell32.dll")]
+    public static extern void SHChangeNotify(int wEventId, int uFlags, IntPtr dwItem1, IntPtr dwItem2);
+}
+"@
+[ShellIconRefresh]::SHChangeNotify(0x08000000, 0x0000, [IntPtr]::Zero, [IntPtr]::Zero)
+Start-Process "ie4uinit.exe" -ArgumentList "-show" -NoNewWindow -Wait -ErrorAction SilentlyContinue
 `;
 
   const encoded = Buffer.from(psScript, 'utf16le').toString('base64');

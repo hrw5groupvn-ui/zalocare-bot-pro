@@ -36,71 +36,98 @@
     .card-svg-container svg { width: 100%; height: auto; border-radius: 0.75rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2); display: block; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    @keyframes mascotFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-9px); }
+    }
+    @keyframes mascotShadow {
+      0%, 100% { transform: scaleX(1); opacity: 0.35; }
+      50% { transform: scaleX(0.82); opacity: 0.2; }
+    }
+    @keyframes mascotArmWave {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(-28deg); }
+    }
+    @keyframes mascotBlink {
+      0%, 92%, 100% { opacity: 1; }
+      95% { opacity: 0.1; }
+    }
+    .mascot-float-anim { animation: mascotFloat 2.8s ease-in-out infinite; }
+    .mascot-shadow-anim { animation: mascotShadow 2.8s ease-in-out infinite; transform-origin: center; }
+    .mascot-arm-wave { animation: mascotArmWave 1.4s ease-in-out infinite; transform-origin: 158px 168px; }
+    .mascot-cursor-blink { animation: mascotBlink 1.1s steps(2, start) infinite; }
+    /* Hard icon size safeguards for crisp enterprise layout */
+    .icon-box-xs { width: 18px !important; height: 18px !important; max-width: 18px !important; max-height: 18px !important; }
+    .icon-box-sm { width: 36px !important; height: 36px !important; max-width: 36px !important; max-height: 36px !important; }
+    .icon-box-md { width: 42px !important; height: 42px !important; max-width: 42px !important; max-height: 42px !important; }
   </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col">
 
-  <!-- Top Navigation Header -->
-  <header class="bg-gradient-to-r from-[#0052cc] via-[#0068FF] to-[#0080ff] text-white shadow-lg sticky top-0 z-30">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-3.5">
-        <div class="w-12 h-12 rounded-2xl bg-white p-1 flex items-center justify-center border-2 border-blue-200 shadow-md shrink-0">
-          <img src="/logo-app.png" alt="Zalo Care Bot" class="w-full h-full object-contain" />
+  <!-- Top Navigation Header (Compact & Sleek Enterprise Style) -->
+  <header class="bg-gradient-to-r from-[#004bb8] via-[#0062f0] to-[#0077ff] text-white shadow-md sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center border border-blue-200 shadow-xs shrink-0">
+          <img src="/logo-app.png" alt="Zalo Care Bot" width="32" height="32" class="w-full h-full object-contain" />
         </div>
         <div>
-          <div class="flex items-center gap-2.5">
-            <h1 class="text-lg sm:text-xl font-extrabold tracking-tight">Zalo Care Bot</h1>
-            <span id="headerModeBadge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-900">
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-extrabold tracking-tight leading-tight">Zalo Care Bot</h1>
+            <span id="headerModeBadge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-400 text-slate-900">
               Chế độ: Chạy thử (Mock)
             </span>
           </div>
-          <p class="text-xs text-blue-100">Hệ thống tự động gửi Thiệp chúc mừng Sinh nhật, Lễ Tết & Trợ lý AI Tự học Giọng văn CSKH</p>
+          <p class="text-[11px] text-blue-100/90 leading-tight mt-0.5">Tự động gửi Thiệp Sinh nhật, Lễ Tết &amp; Trợ lý AI CSKH thông minh</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-2.5">
-        <div id="headerCronStatus" class="hidden md:flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg text-xs border border-white/20">
+      <div class="flex items-center gap-2">
+        <div id="headerCronStatus" class="hidden md:flex items-center gap-1.5 bg-white/10 px-2.5 py-1.5 rounded-lg text-[11px] border border-white/15">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Hẹn giờ tự động: <strong id="headerCronTime">08:00</strong> mỗi ngày</span>
+          <span>Hẹn giờ: <strong id="headerCronTime">08:00</strong></span>
         </div>
-        <button onclick="openZaloSyncModal()" class="bg-emerald-400 hover:bg-emerald-300 text-slate-900 font-bold text-xs sm:text-sm px-3.5 py-2 rounded-lg shadow transition flex items-center gap-1.5">
-          <span>🔄 Đồng bộ Danh bạ Zalo</span>
+        <button onclick="openZaloSyncModal()" class="bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5">
+          <span>🔄 Đồng bộ Danh bạ</span>
         </button>
-        <button onclick="switchTab('settings')" class="bg-white text-zalo-600 hover:bg-blue-50 font-semibold text-xs sm:text-sm px-3.5 py-2 rounded-lg shadow transition flex items-center gap-1.5">
-          <span>⚙️ Cấu hình Zalo</span>
+        <button onclick="minimizeAppToMascot()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1.5" title="Thu nhỏ ứng dụng thành nhân vật hoạt hình Mascot có đồng hồ ở bụng">
+          <span>🤖 Thu nhỏ Mascot</span>
+        </button>
+        <button onclick="switchTab('settings')" class="bg-white text-zalo-600 hover:bg-blue-50 font-semibold text-xs px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
+          <span>⚙️ Cấu hình</span>
         </button>
       </div>
     </div>
 
-    <!-- Navigation Tiles (Grid / Wrap - No Horizontal Scrollbar) -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 border-t border-white/15 py-2.5">
-      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
-        <button onclick="switchTab('dashboard')" id="tabBtn-dashboard" class="tab-btn flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all duration-150 bg-white text-zalo-600 shadow-md">
-          <span class="text-base">📊</span>
+    <!-- Navigation Tiles (Compact 7-Column Bar) -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 border-t border-white/10 py-1.5">
+      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5">
+        <button onclick="switchTab('dashboard')" id="tabBtn-dashboard" class="tab-btn flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-lg transition-all duration-150 bg-white text-zalo-600 shadow-xs">
+          <span>📊</span>
           <span>Tổng quan</span>
         </button>
-        <button onclick="switchTab('customers')" id="tabBtn-customers" class="tab-btn flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/15">
-          <span class="text-base">👥</span>
+        <button onclick="switchTab('customers')" id="tabBtn-customers" class="tab-btn flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/10">
+          <span>👥</span>
           <span>Khách hàng</span>
         </button>
-        <button onclick="switchTab('templates')" id="tabBtn-templates" class="tab-btn flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/15">
-          <span class="text-base">🎨</span>
-          <span>Mẫu & Thiệp</span>
+        <button onclick="switchTab('templates')" id="tabBtn-templates" class="tab-btn flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/10">
+          <span>🎨</span>
+          <span>Mẫu &amp; Thiệp</span>
         </button>
-        <button onclick="switchTab('holidays')" id="tabBtn-holidays" class="tab-btn flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/15">
-          <span class="text-base">🧧</span>
+        <button onclick="switchTab('holidays')" id="tabBtn-holidays" class="tab-btn flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/10">
+          <span>🧧</span>
           <span>Lịch Lễ / Tết</span>
         </button>
-        <button onclick="switchTab('autoreply')" id="tabBtn-autoreply" class="tab-btn flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/15">
-          <span class="text-base">🧠</span>
-          <span>AI CSKH & Tự động</span>
+        <button onclick="switchTab('autoreply')" id="tabBtn-autoreply" class="tab-btn flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/10">
+          <span>🧠</span>
+          <span>AI CSKH &amp; Tự động</span>
         </button>
-        <button onclick="switchTab('settings')" id="tabBtn-settings" class="tab-btn flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/15">
-          <span class="text-base">🔌</span>
+        <button onclick="switchTab('settings')" id="tabBtn-settings" class="tab-btn flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/10">
+          <span>🔌</span>
           <span>Kết nối Zalo</span>
         </button>
-        <button onclick="switchTab('logs')" id="tabBtn-logs" class="tab-btn flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/15">
-          <span class="text-base">📜</span>
+        <button onclick="switchTab('logs')" id="tabBtn-logs" class="tab-btn flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/10">
+          <span>📜</span>
           <span>Lịch sử gửi</span>
         </button>
       </div>
@@ -111,81 +138,81 @@
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-md"></div>
 
   <!-- Main Workspace Container -->
-  <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex-1">
+  <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 py-4 flex-1">
 
     <!-- ================= TAB 1: DASHBOARD ================= -->
-    <section id="tab-dashboard" class="tab-panel space-y-6">
-      <!-- Hero Showcase Banner with 3D Zalo Care Bot Illustration -->
-      <div class="relative rounded-2xl overflow-hidden shadow-md border border-blue-200/80 bg-gradient-to-r from-white via-[#f5f9ff] to-[#dbeafe]">
+    <section id="tab-dashboard" class="tab-panel space-y-4">
+      <!-- Compact Hero Showcase Banner -->
+      <div class="relative rounded-xl overflow-hidden shadow-xs border border-blue-200/80 bg-gradient-to-r from-white via-[#f8fbff] to-[#e0edff]">
         <div class="grid grid-cols-1 lg:grid-cols-12 items-center">
-          <div class="lg:col-span-7 p-6 sm:p-8 space-y-3.5 z-10">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100/90 text-zalo-600 text-xs font-extrabold border border-blue-200">
-              <img src="/logo-app.png" alt="Zalo Care Bot" class="w-4 h-4 object-contain" />
-              <span>ZALO CARE BOT AI 2.0 • TRỢ LÝ CHĂM SÓC KHÁCH HÀNG THÔNG MINH</span>
+          <div class="lg:col-span-8 p-4 sm:p-5 space-y-2.5 z-10">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-100/90 text-zalo-600 text-[11px] font-bold border border-blue-200">
+              <img src="/logo-app.png" alt="Zalo Care Bot" width="14" height="14" class="w-3.5 h-3.5 object-contain" />
+              <span>ZALO CARE BOT AI 2.0 • TRỢ LÝ CSKH THÔNG MINH</span>
             </div>
-            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
+            <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight leading-snug">
               Chăm sóc khách hàng tự động &amp; <span class="text-zalo-500">Tự học giọng văn Zalo</span> của bạn
             </h2>
-            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-xl">
-              Tự động thiết kế &amp; gửi thiệp chúc mừng Sinh nhật, Lễ Tết, Kỷ niệm in Logo riêng, đồng bộ danh bạ bạn bè và tích hợp Bộ não AI đọc hiểu lịch sử trò chuyện để phản hồi khách hàng 24/7 như người thật.
+            <p class="text-xs text-slate-600 leading-relaxed max-w-2xl">
+              Tự động thiết kế &amp; gửi thiệp chúc mừng Sinh nhật, Lễ Tết, Kỷ niệm mang tên riêng từng khách hàng và tích hợp Bộ não AI phản hồi tư vấn nghiệp vụ chuẩn xác.
             </p>
-            <div class="flex flex-wrap items-center gap-2.5 pt-1">
-              <button onclick="sendAllTodayEvents()" class="bg-zalo-500 hover:bg-zalo-600 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-1.5">
-                <img src="/icon-chat.png" alt="" class="w-5 h-5 rounded object-contain bg-white/90 p-0.5" />
+            <div class="flex flex-wrap items-center gap-2 pt-0.5">
+              <button onclick="sendAllTodayEvents()" class="bg-zalo-500 hover:bg-zalo-600 text-white font-bold text-xs px-3.5 py-2 rounded-lg shadow-xs transition flex items-center gap-1.5">
+                <img src="/icon-chat.png" alt="" width="18" height="18" class="icon-box-xs rounded object-contain bg-white/90 p-0.5" />
                 <span>Gửi Chúc Mừng Hôm Nay</span>
               </button>
-              <button onclick="switchTab('autoreply')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-1.5">
-                <img src="/icon-support.png" alt="" class="w-5 h-5 rounded object-contain bg-white/90 p-0.5" />
+              <button onclick="switchTab('autoreply')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg shadow-xs transition flex items-center gap-1.5">
+                <img src="/icon-support.png" alt="" width="18" height="18" class="icon-box-xs rounded object-contain bg-white/90 p-0.5" />
                 <span>Mở Bộ Não AI Tự Học</span>
               </button>
-              <button onclick="switchTab('templates')" class="bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl border border-slate-300 shadow-xs transition flex items-center gap-1.5">
-                <img src="/icon-automation.png" alt="" class="w-5 h-5 rounded object-contain" />
-                <span>Thiết Kế Thiệp Chúc Mừng</span>
+              <button onclick="switchTab('templates')" class="bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs px-3.5 py-2 rounded-lg border border-slate-300 transition flex items-center gap-1.5">
+                <img src="/icon-automation.png" alt="" width="18" height="18" class="icon-box-xs rounded object-contain" />
+                <span>Thiết Kế Thiệp</span>
               </button>
             </div>
           </div>
-          <div class="lg:col-span-5 flex justify-end items-center h-full">
-            <img src="/hero-banner.png" alt="Zalo Care Bot 3D Banner" class="w-full h-48 sm:h-60 lg:h-64 object-cover object-right" />
+          <div class="lg:col-span-4 hidden lg:flex justify-end items-center h-full">
+            <img src="/hero-banner.png" alt="Zalo Care Bot 3D Banner" class="w-full h-40 object-cover object-right" />
           </div>
         </div>
       </div>
 
-      <!-- KPI Summary Cards with Custom Mascot Icons -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200/80 flex items-center justify-between">
+      <!-- Compact KPI Summary Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div class="bg-white rounded-xl p-4 shadow-xs border border-slate-200/80 flex items-center justify-between gap-2">
           <div>
-            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Tổng khách hàng</p>
-            <p id="statTotalCustomers" class="text-3xl font-extrabold text-slate-800 mt-1">0</p>
-            <p class="text-xs text-slate-500 mt-1">Đang hoạt động chăm sóc</p>
+            <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Tổng khách hàng</p>
+            <p id="statTotalCustomers" class="text-2xl font-extrabold text-slate-800 mt-0.5">0</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">Danh bạ chăm sóc</p>
           </div>
-          <img src="/icon-support.png" alt="Khách hàng" class="w-14 h-14 rounded-xl border border-blue-100 shadow-xs object-contain p-0.5 bg-white shrink-0" />
+          <img src="/icon-support.png" alt="Khách hàng" width="42" height="42" class="icon-box-md rounded-xl border border-blue-100 object-contain p-0.5 bg-blue-50/40 shrink-0" />
         </div>
 
-        <div class="bg-white rounded-xl p-5 shadow-sm border border-rose-200 flex items-center justify-between">
+        <div class="bg-white rounded-xl p-4 shadow-xs border border-rose-200 flex items-center justify-between gap-2">
           <div>
-            <p class="text-xs font-medium text-rose-600 uppercase tracking-wider">Cần chúc hôm nay</p>
-            <p id="statTodayCount" class="text-3xl font-extrabold text-rose-600 mt-1">0</p>
-            <p id="statTodayPending" class="text-xs text-slate-500 mt-1">Chưa gửi: 0 khách</p>
+            <p class="text-[11px] font-semibold text-rose-600 uppercase tracking-wider">Cần chúc hôm nay</p>
+            <p id="statTodayCount" class="text-2xl font-extrabold text-rose-600 mt-0.5">0</p>
+            <p id="statTodayPending" class="text-[11px] text-slate-500 mt-0.5">Chưa gửi: 0 khách</p>
           </div>
-          <img src="/icon-chat.png" alt="Chúc hôm nay" class="w-14 h-14 rounded-xl border border-rose-100 shadow-xs object-contain p-0.5 bg-white shrink-0" />
+          <img src="/icon-chat.png" alt="Chúc hôm nay" width="42" height="42" class="icon-box-md rounded-xl border border-rose-100 object-contain p-0.5 bg-rose-50/40 shrink-0" />
         </div>
 
-        <div class="bg-white rounded-xl p-5 shadow-sm border border-amber-200 flex items-center justify-between">
+        <div class="bg-white rounded-xl p-4 shadow-xs border border-amber-200 flex items-center justify-between gap-2">
           <div>
-            <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Sắp tới (14 ngày)</p>
-            <p id="statUpcomingCount" class="text-3xl font-extrabold text-amber-600 mt-1">0</p>
-            <p class="text-xs text-slate-500 mt-1">Tự động hẹn giờ chúc mừng</p>
+            <p class="text-[11px] font-semibold text-amber-600 uppercase tracking-wider">Sắp tới (14 ngày)</p>
+            <p id="statUpcomingCount" class="text-2xl font-extrabold text-amber-600 mt-0.5">0</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">Tự động hẹn giờ</p>
           </div>
-          <img src="/icon-automation.png" alt="Tự động hẹn giờ" class="w-14 h-14 rounded-xl border border-amber-100 shadow-xs object-contain p-0.5 bg-white shrink-0" />
+          <img src="/icon-automation.png" alt="Tự động hẹn giờ" width="42" height="42" class="icon-box-md rounded-xl border border-amber-100 object-contain p-0.5 bg-amber-50/40 shrink-0" />
         </div>
 
-        <div class="bg-white rounded-xl p-5 shadow-sm border border-emerald-200 flex items-center justify-between">
+        <div class="bg-white rounded-xl p-4 shadow-xs border border-emerald-200 flex items-center justify-between gap-2">
           <div>
-            <p class="text-xs font-medium text-emerald-600 uppercase tracking-wider">Đã gửi an toàn</p>
-            <p id="statSentCount" class="text-3xl font-extrabold text-emerald-600 mt-1">0</p>
-            <p class="text-xs text-slate-500 mt-1">Bảo mật &amp; Chống khóa nick</p>
+            <p class="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider">Đã gửi an toàn</p>
+            <p id="statSentCount" class="text-2xl font-extrabold text-emerald-600 mt-0.5">0</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">Bảo mật &amp; Chống khóa</p>
           </div>
-          <img src="/icon-security.png" alt="Gửi an toàn" class="w-14 h-14 rounded-xl border border-emerald-100 shadow-xs object-contain p-0.5 bg-white shrink-0" />
+          <img src="/icon-security.png" alt="Gửi an toàn" width="42" height="42" class="icon-box-md rounded-xl border border-emerald-100 object-contain p-0.5 bg-emerald-50/40 shrink-0" />
         </div>
       </div>
 
@@ -511,47 +538,50 @@
     </section>
 
     <!-- ================= TAB 4B: AUTO-REPLY BOT & AI CSKH ================= -->
-    <section id="tab-autoreply" class="tab-panel hidden space-y-6">
-      <!-- Top Config Card -->
-      <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
-          <div class="flex items-center gap-3.5">
-            <img src="/icon-support.png" alt="Zalo Care Bot Support" class="w-13 h-13 rounded-xl border border-blue-200 shadow-xs object-contain bg-white p-0.5 shrink-0" />
+    <section id="tab-autoreply" class="tab-panel hidden space-y-4">
+      <!-- Top Config Card (Compact & Clean) -->
+      <div class="bg-white rounded-xl p-4 shadow-xs border border-slate-200 space-y-3.5">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-3">
+            <img src="/icon-support.png" alt="Zalo Care Bot Support" width="42" height="42" class="icon-box-md rounded-xl border border-blue-200 object-contain bg-blue-50/40 p-0.5 shrink-0" />
             <div>
-              <div class="flex items-center gap-2.5">
-                <h2 class="text-lg font-bold text-slate-800">Trợ lý AI CSKH & Trả lời Tự động trên Zalo</h2>
-                <span id="arListenerBadge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+              <div class="flex flex-wrap items-center gap-2">
+                <h2 class="text-base font-bold text-slate-800">Trợ lý AI CSKH &amp; Trả lời Tự động trên Zalo</h2>
+                <span id="arListenerBadge" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
                   ● Đang hoạt động
                 </span>
+                <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-zalo-600 border border-blue-200">
+                  🛡️ Tự động im lặng trước tin nhắn cá nhân
+                </span>
               </div>
-              <p class="text-xs text-slate-500 mt-0.5">Kết hợp kịch bản từ khóa tốc độ cao với Trí tuệ nhân tạo (AI) tự đọc lịch sử tin nhắn Zalo và bắt chước giọng văn của bạn</p>
+              <p class="text-xs text-slate-500 mt-0.5">Chỉ phản hồi khi khách hàng hỏi dịch vụ/báo giá hoặc khớp từ khóa nghiệp vụ — tuyệt đối không làm phiền hội thoại riêng tư</p>
             </div>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2.5">
-            <label class="flex items-center gap-2 cursor-pointer bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition">
+          <div class="flex flex-wrap items-center gap-2">
+            <label class="flex items-center gap-2 cursor-pointer bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition">
               <input type="checkbox" id="arEnabledToggle" onchange="saveAutoReplyConfigForm()" class="w-4 h-4 rounded text-zalo-500" />
-              <span class="text-xs sm:text-sm font-bold text-slate-800">Bật Trả lời Tự động</span>
+              <span class="text-xs font-bold text-slate-800">Bật Trả lời Tự động</span>
             </label>
-            <button onclick="openAutoReplyRuleModal()" class="bg-zalo-500 hover:bg-zalo-600 text-white font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl shadow transition">
+            <button onclick="openAutoReplyRuleModal()" class="bg-zalo-500 hover:bg-zalo-600 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition">
               + Thêm Kịch bản Từ khóa
             </button>
           </div>
         </div>
 
         <!-- Settings Row -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Phạm vi trả lời:</label>
-            <select id="arScope" onchange="saveAutoReplyConfigForm()" class="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-slate-300 bg-white">
+            <select id="arScope" onchange="saveAutoReplyConfigForm()" class="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white">
               <option value="private_only">👤 Chỉ tin nhắn Cá nhân 1-1 (Khuyên dùng)</option>
-              <option value="all">👥 Cả Cá nhân & Nhóm Zalo</option>
+              <option value="all">👥 Cả Cá nhân &amp; Nhóm Zalo</option>
             </select>
           </div>
 
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Khung giờ hoạt động:</label>
-            <select id="arWorkingHoursMode" onchange="saveAutoReplyConfigForm()" class="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-slate-300 bg-white">
+            <select id="arWorkingHoursMode" onchange="saveAutoReplyConfigForm()" class="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white">
               <option value="always">🌐 Hoạt động 24/7 (Cả ngày)</option>
               <option value="outside_hours">🌙 Chỉ trả lời khi Ngoài giờ hành chính</option>
               <option value="custom_range">⏰ Chỉ trong khung giờ hành chính</option>
@@ -561,53 +591,53 @@
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Giờ hành chính (Bắt đầu - Kết thúc):</label>
             <div class="flex items-center gap-1.5">
-              <input type="time" id="arWorkStart" onchange="saveAutoReplyConfigForm()" value="08:00" class="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300" />
+              <input type="time" id="arWorkStart" onchange="saveAutoReplyConfigForm()" value="08:00" class="w-full text-xs px-2 py-1.5 rounded-lg border border-slate-300" />
               <span class="text-slate-400">-</span>
-              <input type="time" id="arWorkEnd" onchange="saveAutoReplyConfigForm()" value="18:00" class="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300" />
+              <input type="time" id="arWorkEnd" onchange="saveAutoReplyConfigForm()" value="18:00" class="w-full text-xs px-2 py-1.5 rounded-lg border border-slate-300" />
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Độ trễ trả lời (giây):</label>
-              <input type="number" id="arDelaySeconds" onchange="saveAutoReplyConfigForm()" min="1" max="30" value="3" class="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-slate-300" />
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Độ trễ (giây):</label>
+              <input type="number" id="arDelaySeconds" onchange="saveAutoReplyConfigForm()" min="1" max="30" value="3" class="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300" />
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-600 mb-1">Chống lặp (phút):</label>
-              <input type="number" id="arCooldownMinutes" onchange="saveAutoReplyConfigForm()" min="1" max="1440" value="60" class="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-slate-300" />
+              <input type="number" id="arCooldownMinutes" onchange="saveAutoReplyConfigForm()" min="1" max="1440" value="60" class="w-full text-xs px-2.5 py-1.5 rounded-lg border border-slate-300" />
             </div>
           </div>
         </div>
       </div>
 
       <!-- ================= AI BRAIN & CONVERSATION LEARNING STUDIO ================= -->
-      <div class="bg-gradient-to-br from-indigo-950 via-slate-900 to-blue-950 rounded-2xl p-5 sm:p-6 shadow-lg border border-indigo-500/30 text-white space-y-5">
+      <div class="bg-gradient-to-br from-indigo-950 via-slate-900 to-blue-950 rounded-xl p-4 sm:p-5 shadow-md border border-indigo-500/30 text-white space-y-4">
         <!-- AI Header -->
-        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
-          <div class="flex items-center gap-3.5">
-            <div class="w-14 h-14 rounded-2xl bg-white p-1 flex items-center justify-center shadow-md shrink-0">
-              <img src="/zalo-care-bot-mascot-3d.png" alt="Zalo Care Bot 3D Mascot" class="w-full h-full object-contain" />
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3.5">
+          <div class="flex items-center gap-3">
+            <div class="icon-box-md rounded-xl bg-white p-1 flex items-center justify-center shadow-xs shrink-0">
+              <img src="/zalo-care-bot-mascot-3d.png" alt="Zalo Care Bot 3D Mascot" width="36" height="36" class="w-full h-full object-contain" />
             </div>
             <div>
-              <div class="flex flex-wrap items-center gap-2.5">
-                <h3 class="text-base sm:text-lg font-extrabold text-white">Bộ Não AI Chăm Sóc Khách Hàng & Tự Học Giọng Văn Zalo</h3>
-                <span id="aiStatusBadge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
-                  ● AI Đang Bật & Tự Học
+              <div class="flex flex-wrap items-center gap-2">
+                <h3 class="text-sm sm:text-base font-extrabold text-white">Bộ Não AI Chăm Sóc Khách Hàng &amp; Tự Học Giọng Văn Zalo</h3>
+                <span id="aiStatusBadge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+                  ● AI Đang Bật &amp; Tự Học
                 </span>
               </div>
               <p class="text-xs text-blue-200/80 mt-0.5">
-                AI tự động đọc dữ liệu hội thoại bạn nhắn trên Zalo để học cách xưng hô, từ ngữ quen dùng và trả lời tư vấn khách hàng như người thật
+                Học phong cách giao tiếp của bạn và tự động lọc bỏ 100% tin nhắn gia đình/đồng nghiệp riêng tư
               </p>
             </div>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2.5">
-            <button onclick="syncZaloHistoryForAi()" id="btnSyncZaloAiHistory" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-1.5">
-              <span>📥 Quét & Học từ Lịch sử Tin nhắn Zalo</span>
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="syncZaloHistoryForAi()" id="btnSyncZaloAiHistory" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs px-3.5 py-2 rounded-lg shadow-xs transition flex items-center gap-1.5">
+              <span>📥 Quét &amp; Học Lịch sử Tư vấn Zalo</span>
             </button>
-            <label class="flex items-center gap-2 cursor-pointer bg-white/10 hover:bg-white/15 px-3.5 py-2 rounded-xl border border-white/15 transition">
+            <label class="flex items-center gap-2 cursor-pointer bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded-lg border border-white/15 transition">
               <input type="checkbox" id="aiEnabledToggle" onchange="saveAiConfigForm()" checked class="w-4 h-4 rounded text-amber-400" />
-              <span class="text-xs sm:text-sm font-bold text-white">Bật AI Tư vấn</span>
+              <span class="text-xs font-bold text-white">Bật AI Tư vấn</span>
             </label>
           </div>
         </div>
@@ -1358,6 +1388,92 @@
         <button onclick="closeAutoReplyRuleModal()" class="text-sm font-medium px-4 py-2 rounded-lg border border-slate-300">Hủy</button>
         <button onclick="saveAutoReplyRuleForm()" class="text-sm font-semibold px-5 py-2 rounded-lg bg-zalo-500 hover:bg-zalo-600 text-white shadow">Lưu Kịch Bản</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ================= FLOATING CORNER 3D MASCOT WITH BELLY CLOCK ================= -->
+  <div id="cornerMascotWidget" class="fixed bottom-3 right-3 z-40 flex flex-col items-end select-none">
+    <!-- Speech Bubble -->
+    <div id="cornerMascotBubble" class="mb-0.5 px-2.5 py-1 rounded-xl bg-white/95 backdrop-blur-xs border border-zalo-500 shadow-md text-[10px] font-bold text-slate-800 max-w-[180px] text-center transition-all duration-300">
+      Đang trực Zalo 24/7
+    </div>
+
+    <!-- Animated 3D Mascot Character with Belly Clock -->
+    <div onclick="cycleMascotEmotion()" ondblclick="toggleMiniMascotOverlay(true)" title="Click để đổi biểu cảm • Nhấp đúp để phóng to chế độ Mascot 3D" class="cursor-pointer group relative w-28 h-32 flex items-center justify-center">
+      <svg viewBox="0 0 512 540" class="w-full h-full drop-shadow-xl overflow-visible">
+        <defs>
+          <linearGradient id="clockBezel3d" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#38bdf8" />
+            <stop offset="100%" stop-color="#0068FF" />
+          </linearGradient>
+          <linearGradient id="clockScreen3d" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#061844" />
+            <stop offset="100%" stop-color="#020c26" />
+          </linearGradient>
+        </defs>
+
+        <!-- Ground Floating Shadow -->
+        <ellipse cx="256" cy="518" rx="95" ry="15" fill="#0f172a" class="mascot-shadow-anim" />
+
+        <!-- Floating 3D Character Group -->
+        <g class="mascot-float-anim">
+          <image id="cornerMascot3dImg" href="/mascot-3d-happy.png" x="0" y="0" width="512" height="512" />
+
+          <!-- Dynamic Visor Expressions Overlay (Centered at 250, 203 tilted +6deg) -->
+          <g id="cornerMascotFace" transform="translate(250, 203) rotate(6)"></g>
+
+          <!-- 3D BELLY DIGITAL CLOCK (HH:mm) at (236, 333) -->
+          <g transform="translate(236, 333)">
+            <rect x="-72" y="-33" width="144" height="66" rx="24" fill="url(#clockBezel3d)" />
+            <rect x="-65" y="-26" width="130" height="52" rx="19" fill="url(#clockScreen3d)" stroke="#7df9ff" stroke-width="2.5" />
+            <text id="cornerMascotClock" x="0" y="9" text-anchor="middle" font-family="Consolas, monospace" font-size="27" font-weight="800" fill="#a5f3fc">20:42</text>
+          </g>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ================= FULL MINI 3D MASCOT MODE OVERLAY ================= -->
+  <div id="mascotMiniModeOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 hidden flex-col items-center justify-center p-6 select-none">
+    <div class="bg-white/95 rounded-3xl p-7 max-w-md w-full shadow-2xl border-2 border-blue-200 flex flex-col items-center text-center space-y-4">
+      <div id="miniMascotBubble" class="px-4 py-2 rounded-2xl bg-blue-50 border border-blue-200 text-zalo-600 font-extrabold text-sm shadow-xs">
+        Chế độ Mascot 3D • Zalo Care Bot đang trực 24/7!
+      </div>
+
+      <!-- Large Animated 3D Mascot with Belly Clock -->
+      <div onclick="cycleMascotEmotion()" class="cursor-pointer w-64 h-68 flex items-center justify-center">
+        <svg viewBox="0 0 512 540" class="w-full h-full drop-shadow-2xl overflow-visible">
+          <ellipse cx="256" cy="518" rx="100" ry="16" fill="#0f172a" class="mascot-shadow-anim" />
+          <g class="mascot-float-anim">
+            <image id="miniMascot3dImg" href="/mascot-3d-happy.png" x="0" y="0" width="512" height="512" />
+            <g id="miniMascotFace" transform="translate(250, 203) rotate(6)"></g>
+            <g transform="translate(236, 333)">
+              <rect x="-72" y="-33" width="144" height="66" rx="24" fill="url(#clockBezel3d)" />
+              <rect x="-65" y="-26" width="130" height="52" rx="19" fill="url(#clockScreen3d)" stroke="#7df9ff" stroke-width="2.5" />
+              <text id="miniMascotClock" x="0" y="9" text-anchor="middle" font-family="Consolas, monospace" font-size="27" font-weight="800" fill="#a5f3fc">20:42</text>
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Emotion Selector Pills -->
+      <div class="space-y-1.5 w-full">
+        <p class="text-xs font-bold text-slate-500">Chọn cảm xúc nhân vật 3D (hoặc tự động theo trạng thái):</p>
+        <div class="flex flex-wrap justify-center gap-1.5">
+          <button onclick="setMascotEmotion('happy')" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-100 text-slate-800 border border-slate-300">😊 Vui vẻ 3D (^_^)</button>
+          <button onclick="setMascotEmotion('ai_code')" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-100 text-slate-800 border border-slate-300">💻 AI Code (&gt;_)</button>
+          <button onclick="setMascotEmotion('excited')" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-100 text-slate-800 border border-slate-300">🎉 Hào hứng (★_★)</button>
+          <button onclick="setMascotEmotion('sleepy')" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-100 text-slate-800 border border-slate-300">😴 Nghỉ ngơi (Zzz)</button>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-500 leading-relaxed">
+        💡 Nhân vật Mascot 3D chuẩn mẫu của bạn đã được hiển thị nổi trực tiếp ở góc phải màn hình Windows Desktop.
+      </p>
+
+      <button onclick="toggleMiniMascotOverlay(false)" class="w-full bg-zalo-500 hover:bg-zalo-600 text-white font-extrabold text-sm py-2.5 rounded-xl shadow-md transition">
+        🔍 Mở Rộng Lại Giao Diện Chính
+      </button>
     </div>
   </div>
 

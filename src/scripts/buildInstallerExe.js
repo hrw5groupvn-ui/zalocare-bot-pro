@@ -8,9 +8,10 @@ const PAYLOAD_DIR = path.join(STAGING_ROOT, 'payload');
 const PAYLOAD_ZIP = path.join(STAGING_ROOT, 'payload.zip');
 const CS_FILE = path.join(STAGING_ROOT, 'InstallerProgram.cs');
 
-const OUT_EXE_WORKSPACE = path.join(ROOT_DIR, '..', 'ZaloCare-Bot-Setup.exe');
+const OUT_EXE_WORKSPACE = path.join(ROOT_DIR, '..', 'Zalo-Care-Bot-Setup.exe');
+const OUT_EXE_WORKSPACE_LEGACY = path.join(ROOT_DIR, '..', 'ZaloCare-Bot-Setup.exe');
 const OUT_EXE_PUBLIC = path.join(ROOT_DIR, 'public', 'ZaloCare-Bot-Setup.exe');
-const ICO_PATH = path.join(ROOT_DIR, 'public', 'app-icon.ico');
+const ICO_PATH = path.join(ROOT_DIR, 'public', 'zalo-care-bot-icon.ico');
 const LOGO_PNG_PATH = path.join(ROOT_DIR, 'public', 'logo-app.png');
 const HERO_PNG_PATH = path.join(ROOT_DIR, 'public', 'hero-banner.png');
 
@@ -392,6 +393,7 @@ function buildExe() {
     'start-bot.bat',
     'Cai-Dat-Va-Chay-Ngay.bat',
     'ZaloCare-App.vbs',
+    'ZaloCareMascot.exe',
     'README.md',
     'SKILL.md'
   ];
@@ -422,8 +424,20 @@ function buildExe() {
 
   execSync(compileCmd, { stdio: 'inherit' });
 
-  // Copy to public/ so user can also download the .exe directly from the web dashboard!
+  // Copy to public/ and workspace legacy path so download links continue working!
   fs.copyFileSync(OUT_EXE_WORKSPACE, OUT_EXE_PUBLIC);
+  fs.copyFileSync(OUT_EXE_WORKSPACE, OUT_EXE_WORKSPACE_LEGACY);
+
+  // Also update Desktop installer and remove old cached ZaloCare-Bot-Setup.exe on Desktop
+  const desktopDir = path.join(process.env.USERPROFILE || 'C:\\Users\\ADMIN', 'Desktop');
+  if (fs.existsSync(desktopDir)) {
+    const oldDesktopExe = path.join(desktopDir, 'ZaloCare-Bot-Setup.exe');
+    if (fs.existsSync(oldDesktopExe)) {
+      try { fs.unlinkSync(oldDesktopExe); } catch (e) {}
+    }
+    const newDesktopExe = path.join(desktopDir, 'Zalo-Care-Bot-Setup.exe');
+    try { fs.copyFileSync(OUT_EXE_WORKSPACE, newDesktopExe); } catch (e) {}
+  }
 
   // Clean up staging
   fs.rmSync(STAGING_ROOT, { recursive: true, force: true });

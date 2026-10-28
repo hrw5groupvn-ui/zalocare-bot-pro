@@ -24,7 +24,12 @@ If Not isRunning Then
   WScript.Sleep 2000
 End If
 
-' 3. Open in Standalone Desktop App Mode (Edge or Chrome App Window without address bar)
+' 3. Start Animated Desktop Mascot (if built)
+If fso.FileExists(appDir & "\ZaloCareMascot.exe") Then
+  WshShell.Run """" & appDir & "\ZaloCareMascot.exe""", 1, False
+End If
+
+' 4. Open in Standalone Desktop App Mode (Edge or Chrome App Window without address bar)
 On Error Resume Next
 Err.Clear
 WshShell.Run "msedge.exe --app=http://localhost:3088 --window-size=1400,880", 1, False

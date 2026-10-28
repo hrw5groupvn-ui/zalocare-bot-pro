@@ -527,6 +527,69 @@ app.delete('/api/ai/knowledge/:id', (req, res) => {
   res.json({ deleted: true });
 });
 
+// 10. Desktop & In-App Animated Mascot Status & Minimize Trigger
+let pendingMinimizeTrigger = false;
+
+app.get('/api/mascot/status', (req, res) => {
+  const arConfig = db.getAutoReplyConfig();
+  const aiConfig = aiService.getConfig();
+  const qrStatus = zaloService.getQrStatus();
+  const { todayEvents } = schedulerService.getEventsOverview(7);
+  const pendingToday = todayEvents.filter((e) => !e.alreadySent).length;
+  const recentArLogs = db.getAutoReplyLogs(5);
+
+  let emotion = 'happy';
+  let statusText = 'Zalo Care Bot • Trực 24/7';
+
+  const rawUser = String(qrStatus.scannedUser || '').trim();
+  const cleanUser = !rawUser || rawUser.startsWith('Zalo UID:') ? 'Hoàn Phạm' : rawUser;
+
+  if (arConfig.enabled === false && aiConfig.enabled === false) {
+    emotion = 'sleepy';
+    statusText = 'Đang tạm nghỉ ngơi...';
+  } else if (recentArLogs.length && Date.now() - new Date(recentArLogs[0].timestamp).getTime() < 60000) {
+    emotion = 'excited';
+    statusText = `Vừa hỗ trợ: ${recentArLogs[0].senderName}`;
+  } else if (pendingToday > 0) {
+    emotion = 'excited';
+    statusText = `Hôm nay có ${pendingToday} khách cần chúc!`;
+  } else if (qrStatus.isConnected) {
+    emotion = 'happy';
+    statusText = `Đang trực Zalo • ${cleanUser}`;
+  }
+
+  const triggerMinimize = pendingMinimizeTrigger;
+  pendingMinimizeTrigger = false;
+
+  res.json({
+    emotion,
+    statusText,
+    isConnected: Boolean(qrStatus.isConnected),
+    pendingToday,
+    triggerMinimize
+  });
+});
+
+app.post('/api/mascot/minimize', (req, res) => {
+  try {
+    const fs = require('fs');
+    const { spawn } = require('child_process');
+    const mascotExe = path.join(__dirname, 'ZaloCareMascot.exe');
+    pendingMinimizeTrigger = true;
+    if (fs.existsSync(mascotExe)) {
+      const child = spawn(mascotExe, ['--minimize-app'], {
+        detached: true,
+        stdio: 'ignore',
+        windowsHide: false
+      });
+      child.unref();
+    }
+    res.json({ success: true, message: 'Đã thu nhỏ ứng dụng thành Mascot hoạt hình!' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Start Server & Cron
 app.listen(PORT, async () => {
   console.log(`============================================================`);
