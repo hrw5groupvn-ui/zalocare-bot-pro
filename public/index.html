@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zalo Care Bot — Chúc mừng Sinh nhật, Lễ Tết & Trợ lý AI CSKH</title>
+  <link rel="icon" type="image/x-icon" href="/app-icon.ico?v=2" />
+  <link rel="manifest" href="/manifest.json" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            zalo: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#0068FF',
+              600: '#0054d1',
+              700: '#0041a3',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; background-color: #f1f5f9; }
+    .zalo-chat-bg { background-color: #e2e8f0; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 16px 16px; }
+    .card-svg-container svg { width: 100%; height: auto; border-radius: 0.75rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2); display: block; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Top Navigation Header -->
+  <header class="bg-gradient-to-r from-[#0052cc] via-[#0068FF] to-[#0080ff] text-white shadow-lg sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3.5">
+        <div class="w-12 h-12 rounded-2xl bg-white p-1 flex items-center justify-center border-2 border-blue-200 shadow-md shrink-0">
+          <img src="/logo-app.png" alt="Zalo Care Bot" class="w-full h-full object-contain" />
+        </div>
+        <div>
+          <div class="flex items-center gap-2.5">
+            <h1 class="text-lg sm:text-xl font-extrabold tracking-tight">Zalo Care Bot</h1>
+            <span id="headerModeBadge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-900">
+              Chế độ: Chạy thử (Mock)
+            </span>
+          </div>
+          <p class="text-xs text-blue-100">Hệ thống tự động gửi Thiệp chúc mừng Sinh nhật, Lễ Tết & Trợ lý AI Tự học Giọng văn CSKH</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <div id="headerCronStatus" class="hidden md:flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg text-xs border border-white/20">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Hẹn giờ tự động: <strong id="headerCronTime">08:00</strong> mỗi ngày</span>
+        </div>
+        <button onclick="openZaloSyncModal()" class="bg-emerald-400 hover:bg-emerald-300 text-slate-900 font-bold text-xs sm:text-sm px-3.5 py-2 rounded-lg shadow transition flex items-center gap-1.5">
+          <span>🔄 Đồng bộ Danh bạ Zalo</span>
+        </button>
+        <button onclick="switchTab('settings')" class="bg-white text-zalo-600 hover:bg-blue-50 font-semibold text-xs sm:text-sm px-3.5 py-2 rounded-lg shadow transition flex items-center gap-1.5">
+          <span>⚙️ Cấu hình Zalo</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tiles (Grid / Wrap - No Horizontal Scrollbar) -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 border-t border-white/15 py-2.5">
+      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+        <button onclick="switchTab('dashboard')" id="tabBtn-dashboard" class="tab-btn flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all duration-150 bg-white text-zalo-600 shadow-md">
+          <span class="text-base">📊</span>
+          <span>Tổng quan</span>
+        </button>
+        <button onclick="switchTab('customers')" id="tabBtn-customers" class="tab-btn flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/15">
+          <span class="text-base">👥</span>
+          <span>Khách hàng</span>
+        </button>
+        <button onclick="switchTab('templates')" id="tabBtn-templates" class="tab-btn flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/15">
+          <span class="text-base">🎨</span>
+          <span>Mẫu & Thiệp</span>
+        </button>
+        <button onclick="switchTab('holidays')" id="tabBtn-holidays" class="tab-btn flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/15">
+          <span class="text-base">🧧</span>
+          <span>Lịch Lễ / Tết</span>
+        </button>
+        <button onclick="switchTab('autoreply')" id="tabBtn-autoreply" class="tab-btn flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/15">
+          <span class="text-base">🧠</span>
+          <span>AI CSKH & Tự động</span>
+        </button>
+        <button onclick="switchTab('settings')" id="tabBtn-settings" class="tab-btn flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/15">
+          <span class="text-base">🔌</span>
+          <span>Kết nối Zalo</span>
+        </button>
+        <button onclick="switchTab('logs')" id="tabBtn-logs" class="tab-btn flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-150 bg-white/10 text-white hover:bg-white/20 border border-white/15">
+          <span class="text-base">📜</span>
+          <span>Lịch sử gửi</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toast Notification -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-md"></div>
+
+  <!-- Main Workspace Container -->
+  <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex-1">
+
+    <!-- ================= TAB 1: DASHBOARD ================= -->
+    <section id="tab-dashboard" class="tab-panel space-y-6">
+      <!-- Hero Showcase Banner with 3D Zalo Care Bot Illustration -->
+      <div class="relative rounded-2xl overflow-hidden shadow-md border border-blue-200/80 bg-gradient-to-r from-white via-[#f5f9ff] to-[#dbeafe]">
+        <div class="grid grid-cols-1 lg:grid-cols-12 items-center">
+          <div class="lg:col-span-7 p-6 sm:p-8 space-y-3.5 z-10">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100/90 text-zalo-600 text-xs font-extrabold border border-blue-200">
+              <img src="/logo-app.png" alt="Zalo Care Bot" class="w-4 h-4 object-contain" />
+              <span>ZALO CARE BOT AI 2.0 • TRỢ LÝ CHĂM SÓC KHÁCH HÀNG THÔNG MINH</span>
+            </div>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              Chăm sóc khách hàng tự động &amp; <span class="text-zalo-500">Tự học giọng văn Zalo</span> của bạn
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-xl">
+              Tự động thiết kế &amp; gửi thiệp chúc mừng Sinh nhật, Lễ Tết, Kỷ niệm in Logo riêng, đồng bộ danh bạ bạn bè và tích hợp Bộ não AI đọc hiểu lịch sử trò chuyện để phản hồi khách hàng 24/7 như người thật.
+            </p>
+            <div class="flex flex-wrap items-center gap-2.5 pt-1">
+              <button onclick="sendAllTodayEvents()" class="bg-zalo-500 hover:bg-zalo-600 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-1.5">
+                <img src="/icon-chat.png" alt="" class="w-5 h-5 rounded object-contain bg-white/90 p-0.5" />
+                <span>Gửi Chúc Mừng Hôm Nay</span>
+              </button>
+              <button onclick="switchTab('autoreply')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-1.5">
+                <img src="/icon-support.png" alt="" class="w-5 h-5 rounded object-contain bg-white/90 p-0.5" />
+                <span>Mở Bộ Não AI Tự Học</span>
+              </button>
+              <button onclick="switchTab('templates')" class="bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl border border-slate-300 shadow-xs transition flex items-center gap-1.5">
+                <img src="/icon-automation.png" alt="" class="w-5 h-5 rounded object-contain" />
+                <span>Thiết Kế Thiệp Chúc Mừng</span>
+              </button>
+            </div>
+          </div>
+          <div class="lg:col-span-5 flex justify-end items-center h-full">
+            <img src="/hero-banner.png" alt="Zalo Care Bot 3D Banner" class="w-full h-48 sm:h-60 lg:h-64 object-cover object-right" />
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards with Custom Mascot Icons -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200/80 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Tổng khách hàng</p>
+            <p id="statTotalCustomers" class="text-3xl font-extrabold text-slate-800 mt-1">0</p>
+            <p class="text-xs text-slate-500 mt-1">Đang hoạt động chăm sóc</p>
+          </div>
+          <img src="/icon-support.png" alt="Khách hàng" class="w-14 h-14 rounded-xl border border-blue-100 shadow-xs object-contain p-0.5 bg-white shrink-0" />
+        </div>
+
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-rose-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-rose-600 uppercase tracking-wider">Cần chúc hôm nay</p>
+            <p id="statTodayCount" class="text-3xl font-extrabold text-rose-600 mt-1">0</p>
+            <p id="statTodayPending" class="text-xs text-slate-500 mt-1">Chưa gửi: 0 khách</p>
+          </div>
+          <img src="/icon-chat.png" alt="Chúc hôm nay" class="w-14 h-14 rounded-xl border border-rose-100 shadow-xs object-contain p-0.5 bg-white shrink-0" />
+        </div>
+
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-amber-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Sắp tới (14 ngày)</p>
+            <p id="statUpcomingCount" class="text-3xl font-extrabold text-amber-600 mt-1">0</p>
+            <p class="text-xs text-slate-500 mt-1">Tự động hẹn giờ chúc mừng</p>
+          </div>
+          <img src="/icon-automation.png" alt="Tự động hẹn giờ" class="w-14 h-14 rounded-xl border border-amber-100 shadow-xs object-contain p-0.5 bg-white shrink-0" />
+        </div>
+
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-emerald-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-emerald-600 uppercase tracking-wider">Đã gửi an toàn</p>
+            <p id="statSentCount" class="text-3xl font-extrabold text-emerald-600 mt-1">0</p>
+            <p class="text-xs text-slate-500 mt-1">Bảo mật &amp; Chống khóa nick</p>
+          </div>
+          <img src="/icon-security.png" alt="Gửi an toàn" class="w-14 h-14 rounded-xl border border-emerald-100 shadow-xs object-contain p-0.5 bg-white shrink-0" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left 2 Columns: Today's Celebrations & Upcoming -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Today's Events Card -->
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-rose-50/70 to-amber-50/40">
+              <div>
+                <h2 class="font-bold text-slate-800 flex items-center gap-2 text-base">
+                  <span>🎉 Danh sách Khách hàng có Sinh nhật / Kỷ niệm / Lễ Hôm nay</span>
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5">Hệ thống tự động phát hiện và tạo thiệp chúc mừng mang tên từng khách hàng</p>
+              </div>
+              <button onclick="sendAllTodayEvents()" id="btnSendAllToday" class="bg-zalo-500 hover:bg-zalo-600 text-white font-semibold text-xs sm:text-sm px-4 py-2 rounded-lg shadow transition flex items-center gap-1.5">
+                <span>🚀 Gửi Tất Cả Hôm Nay</span>
+              </button>
+            </div>
+            <div id="todayEventsList" class="divide-y divide-slate-100">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- Upcoming 14 Days Card -->
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h2 class="font-bold text-slate-800 text-base">⏳ Sự kiện Sinh nhật & Kỷ niệm sắp tới (14 ngày tới)</h2>
+                <p class="text-xs text-slate-500">Chuẩn bị trước quà tặng hoặc gửi lời chúc sớm</p>
+              </div>
+            </div>
+            <div id="upcomingEventsList" class="divide-y divide-slate-100">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Live Zalo Message & Card Simulator -->
+        <div class="space-y-6">
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-4 py-3 bg-[#0068FF] text-white flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm">Z</div>
+                <div>
+                  <p id="simHeaderName" class="text-sm font-bold leading-tight">Mô phỏng Tin nhắn Zalo</p>
+                  <p class="text-[11px] text-blue-100">Xem trước Thiệp & Lời chúc</p>
+                </div>
+              </div>
+              <span class="text-[11px] bg-white/20 px-2 py-0.5 rounded">Trực tiếp</span>
+            </div>
+
+            <div class="zalo-chat-bg p-4 space-y-3 min-h-[380px] flex flex-col justify-end">
+              <div class="text-center">
+                <span class="text-[11px] bg-slate-300/80 text-slate-700 px-2.5 py-0.5 rounded-full">Hôm nay</span>
+              </div>
+
+              <!-- Card Image Bubble -->
+              <div class="bg-white p-2 rounded-2xl rounded-tl-sm shadow-sm max-w-[95%] border border-slate-200/80">
+                <div id="dashboardCardPreview" class="card-svg-container overflow-hidden rounded-lg bg-slate-900 min-h-[150px] flex items-center justify-center text-xs text-slate-400">
+                  Đang tải thiệp chúc mừng...
+                </div>
+                <p class="text-[11px] text-emerald-600 font-medium mt-1.5 px-1 flex items-center justify-between">
+                  <span>✨ Thiệp tự động in tên khách hàng</span>
+                  <span>HD 1200x675</span>
+                </p>
+              </div>
+
+              <!-- Text Bubble -->
+              <div class="bg-white p-3.5 rounded-2xl rounded-tl-sm shadow-sm max-w-[95%] border border-slate-200/80">
+                <p id="dashboardTextPreview" class="text-xs sm:text-sm text-slate-800 whitespace-pre-line leading-relaxed"></p>
+                <div class="text-[10px] text-slate-400 text-right mt-1.5">Đã gửi từ ZaloCare Bot ✓✓</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 2: CUSTOMERS & EXCEL ================= -->
+    <section id="tab-customers" class="tab-panel hidden space-y-5">
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-800">Danh sách Khách hàng</h2>
+          <p class="text-xs text-slate-500">Quản lý ngày sinh, ngày kỷ niệm, xưng hô (Anh/Chị/Cô/Chú) và nhập/xuất từ Excel</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2.5">
+          <button onclick="openZaloSyncModal()" class="text-xs sm:text-sm font-bold px-3.5 py-2 rounded-lg bg-gradient-to-r from-[#0052cc] to-[#0068FF] hover:opacity-95 text-white shadow transition flex items-center gap-1.5">
+            <span>🔄 Đồng bộ Danh bạ Zalo</span>
+          </button>
+          <a href="/api/customers/export?sample=1" class="text-xs font-semibold px-3 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition">
+            📥 Tải File Excel Mẫu
+          </a>
+          <label class="cursor-pointer text-xs font-semibold px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
+            📂 Nhập từ Excel (.xlsx / .csv)
+            <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" class="hidden" onchange="handleImportExcel(event)" />
+          </label>
+          <a href="/api/customers/export" class="text-xs font-semibold px-3 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition">
+            📤 Xuất Excel
+          </a>
+          <button onclick="openCustomerModal()" class="text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg bg-zalo-500 hover:bg-zalo-600 text-white shadow transition">
+            + Thêm Khách hàng
+          </button>
+        </div>
+      </div>
+
+      <!-- Search & Filter Bar -->
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex flex-wrap items-center gap-3">
+        <div class="flex-1 min-w-[220px]">
+          <input type="text" id="customerSearchInput" oninput="renderCustomersTable()" placeholder="🔍 Tìm theo Họ tên, Số điện thoại, Ghi chú..." class="w-full text-sm px-3.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-zalo-500" />
+        </div>
+        <select id="customerGenderFilter" onchange="renderCustomersTable()" class="text-sm px-3 py-2 rounded-lg border border-slate-300 bg-white">
+          <option value="">Tất cả giới tính</option>
+          <option value="male">👨 Nam</option>
+          <option value="female">👩 Nữ</option>
+        </select>
+        <select id="customerGroupFilter" onchange="renderCustomersTable()" class="text-sm px-3 py-2 rounded-lg border border-slate-300 bg-white">
+          <option value="">Tất cả nhóm khách</option>
+          <option value="VIP">Nhóm VIP</option>
+          <option value="Thân thiết">Nhóm Thân thiết</option>
+          <option value="Doanh nghiệp">Nhóm Doanh nghiệp</option>
+        </select>
+        <select id="customerMonthFilter" onchange="renderCustomersTable()" class="text-sm px-3 py-2 rounded-lg border border-slate-300 bg-white">
+          <option value="">Tất cả tháng sinh</option>
+          <option value="01">Sinh tháng 1</option>
+          <option value="02">Sinh tháng 2</option>
+          <option value="03">Sinh tháng 3</option>
+          <option value="04">Sinh tháng 4</option>
+          <option value="05">Sinh tháng 5</option>
+          <option value="06">Sinh tháng 6</option>
+          <option value="07">Sinh tháng 7</option>
+          <option value="08">Sinh tháng 8</option>
+          <option value="09">Sinh tháng 9</option>
+          <option value="10">Sinh tháng 10</option>
+          <option value="11">Sinh tháng 11</option>
+          <option value="12">Sinh tháng 12</option>
+        </select>
+      </div>
+
+      <!-- Customers Table -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold">
+                <th class="py-3.5 px-4">Khách hàng</th>
+                <th class="py-3.5 px-4">Giới tính</th>
+                <th class="py-3.5 px-4">SĐT Zalo / UID</th>
+                <th class="py-3.5 px-4">🎂 Ngày sinh</th>
+                <th class="py-3.5 px-4">💎 Ngày kỷ niệm</th>
+                <th class="py-3.5 px-4">Nhóm</th>
+                <th class="py-3.5 px-4 text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="customersTableBody" class="divide-y divide-slate-100 text-sm">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 3: TEMPLATES & CARD STUDIO ================= -->
+    <section id="tab-templates" class="tab-panel hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left 7 cols: Template Selector & Editor -->
+        <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+            <div>
+              <h2 class="text-base font-bold text-slate-800">🎨 Thiết kế Mẫu lời chúc & Thiệp chúc mừng tự động</h2>
+              <p class="text-xs text-slate-500">Tùy chỉnh lời chúc và mẫu thiệp cho từng dịp Sinh nhật, Lễ Tết, Kỷ niệm</p>
+            </div>
+            <button onclick="createNewTemplate()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+              + Tạo mẫu mới
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Chọn mẫu đang có:</label>
+              <select id="tplSelect" onchange="onSelectTemplateChange()" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300 bg-white font-medium"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Thử xem trước với khách hàng:</label>
+              <select id="tplPreviewCustomerSelect" onchange="updateStudioPreview()" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300 bg-white"></select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Tên mẫu lời chúc:</label>
+              <input type="text" id="tplName" oninput="updateStudioPreview()" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Phân loại dịp:</label>
+              <select id="tplCategory" onchange="updateStudioPreview()" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300 bg-white">
+                <option value="birthday">🎂 Sinh nhật</option>
+                <option value="anniversary">💎 Ngày kỷ niệm</option>
+                <option value="holiday">🧧 Ngày Lễ / Tết</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Card Visual Config -->
+          <div class="p-3.5 rounded-xl bg-amber-50/60 border border-amber-200/80 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <p class="text-xs font-bold text-amber-900 uppercase tracking-wider">🖼️ Cấu hình Thiệp Chúc Mừng Thượng Lưu & Logo Công Ty</p>
+              <label class="flex items-center gap-1.5 text-xs font-bold text-amber-900 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-amber-300 shadow-2xs">
+                <input type="checkbox" id="tplShowLogoToggle" checked onchange="toggleShowLogoOnCard(this.checked)" class="rounded text-amber-600" />
+                <span>✨ In Logo Bản Việt Design lên Thiệp</span>
+              </label>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Chủ đề Thiết kế Thiệp:</label>
+                <select id="tplCardTheme" onchange="updateStudioPreview()" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300 bg-white font-semibold">
+                  <option value="banviet_obsidian_gold">✨ Bản Việt Signature — Đen Huyền Bí & Vàng 24K</option>
+                  <option value="champagne_pearl">🥂 Ngọc Trai Champagne — Nền Kem Sáng & Vàng Đồng</option>
+                  <option value="royal_gold">👑 Hoàng Gia Vàng Kim — Xanh Navy Đế Vương</option>
+                  <option value="emerald_luxury">💎 Ngọc Lục Bảo Hoàng Gia — Tri Ân VIP</option>
+                  <option value="platinum_midnight">🏛️ Kiến Trúc Đương Đại — Xám Bạch Kim & Vàng</option>
+                  <option value="tet_crimson">🧧 Đỏ Nhung Hoàng Cung — Lễ Tết Thịnh Vượng</option>
+                  <option value="rose_pastel">🌸 Hồng Ngọc Thượng Lưu — Phái Đẹp / 8-3 / 20-10</option>
+                  <option value="festive_blue">🎉 Xanh Sapphire Lễ Hội — Sự Kiện Đặc Biệt</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Mã Quà tặng / Đặc quyền trên thiệp (tùy chọn):</label>
+                <input type="text" id="tplVoucherCode" oninput="updateStudioPreview()" placeholder="VD: BANVIETVIP" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Tiêu đề chính trên Thiệp:</label>
+                <input type="text" id="tplCardTitle" oninput="updateStudioPreview()" placeholder="CHÚC MỪNG SINH NHẬT" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Câu chúc ngắn in trên Thiệp:</label>
+                <input type="text" id="tplCardSubtitle" oninput="updateStudioPreview()" placeholder="Chúc {xung_ho} {ten} tuổi mới rạng rỡ & thành công!" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Variable Chips -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Chèn nhanh biến cá nhân hóa (Click để chèn vào nội dung):</label>
+            <div class="flex flex-wrap gap-1.5">
+              <button type="button" onclick="insertVar('{xung_ho}')" class="text-xs bg-blue-50 hover:bg-blue-100 text-zalo-600 font-medium px-2.5 py-1 rounded border border-blue-200">{xung_ho} (Anh/Chị)</button>
+              <button type="button" onclick="insertVar('{xung_ho_thuong}')" class="text-xs bg-blue-50 hover:bg-blue-100 text-zalo-600 font-medium px-2.5 py-1 rounded border border-blue-200">{xung_ho_thuong} (anh/chị)</button>
+              <button type="button" onclick="insertVar('{ten}')" class="text-xs bg-blue-50 hover:bg-blue-100 text-zalo-600 font-medium px-2.5 py-1 rounded border border-blue-200">{ten} (Tên gọi)</button>
+              <button type="button" onclick="insertVar('{ho_ten}')" class="text-xs bg-blue-50 hover:bg-blue-100 text-zalo-600 font-medium px-2.5 py-1 rounded border border-blue-200">{ho_ten} (Họ và tên)</button>
+              <button type="button" onclick="insertVar('{ngay_sinh}')" class="text-xs bg-blue-50 hover:bg-blue-100 text-zalo-600 font-medium px-2.5 py-1 rounded border border-blue-200">{ngay_sinh}</button>
+              <button type="button" onclick="insertVar('{so_nam_gan_bo}')" class="text-xs bg-blue-50 hover:bg-blue-100 text-zalo-600 font-medium px-2.5 py-1 rounded border border-blue-200">{so_nam_gan_bo}</button>
+              <button type="button" onclick="insertVar('{loai_ky_niem}')" class="text-xs bg-blue-50 hover:bg-blue-100 text-zalo-600 font-medium px-2.5 py-1 rounded border border-blue-200">{loai_ky_niem}</button>
+              <button type="button" onclick="insertVar('{ten_dip_le}')" class="text-xs bg-blue-50 hover:bg-blue-100 text-zalo-600 font-medium px-2.5 py-1 rounded border border-blue-200">{ten_dip_le}</button>
+              <button type="button" onclick="insertVar('{ma_uu_dai}')" class="text-xs bg-blue-50 hover:bg-blue-100 text-zalo-600 font-medium px-2.5 py-1 rounded border border-blue-200">{ma_uu_dai}</button>
+              <button type="button" onclick="insertVar('{ten_thuong_hieu}')" class="text-xs bg-blue-50 hover:bg-blue-100 text-zalo-600 font-medium px-2.5 py-1 rounded border border-blue-200">{ten_thuong_hieu}</button>
+              <button type="button" onclick="insertVar('{sdt_hotline}')" class="text-xs bg-blue-50 hover:bg-blue-100 text-zalo-600 font-medium px-2.5 py-1 rounded border border-blue-200">{sdt_hotline}</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Nội dung tin nhắn Zalo:</label>
+            <textarea id="tplContent" rows="6" oninput="updateStudioPreview()" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-zalo-500 leading-relaxed"></textarea>
+          </div>
+
+          <div class="flex items-center justify-between pt-2">
+            <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+              <input type="checkbox" id="tplIsDefault" class="rounded text-zalo-500" />
+              <span>Đặt làm mẫu mặc định cho dịp này</span>
+            </label>
+            <div class="flex items-center gap-2">
+              <button onclick="saveCurrentTemplate()" class="bg-zalo-500 hover:bg-zalo-600 text-white font-semibold text-sm px-5 py-2 rounded-lg shadow transition">
+                💾 Lưu Mẫu Lời Chúc
+              </button>
+              <button onclick="sendTestFromStudio()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-4 py-2 rounded-lg shadow transition">
+                🚀 Gửi thử cho khách này
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right 5 cols: Live Card & Chat Preview -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-bold text-slate-800">🖼️ Xem trước Thiệp Chúc Mừng Tự Động</h3>
+              <span class="text-xs text-emerald-600 font-semibold">Tự động thay tên theo từng khách</span>
+            </div>
+            <div id="studioCardPreview" class="card-svg-container rounded-xl overflow-hidden bg-slate-900"></div>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-4 py-2.5 bg-[#0068FF] text-white text-xs font-bold flex items-center justify-between">
+              <span>💬 Nội dung hiển thị trên Zalo của khách</span>
+              <span id="studioRecipientBadge" class="bg-white/20 px-2 py-0.5 rounded"></span>
+            </div>
+            <div class="zalo-chat-bg p-4">
+              <div class="bg-white p-3.5 rounded-2xl rounded-tl-sm shadow-sm border border-slate-200">
+                <p id="studioTextPreview" class="text-xs sm:text-sm text-slate-800 whitespace-pre-line leading-relaxed"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 4: HOLIDAYS & CAMPAIGNS ================= -->
+    <section id="tab-holidays" class="tab-panel hidden space-y-5">
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-800">🧧 Lịch Ngày Lễ, Tết & Chiến dịch Chúc mừng Hàng loạt</h2>
+          <p class="text-xs text-slate-500">Tự động gửi lời chúc vào các dịp Lễ lớn (Tết, 8/3, 30/4, 2/9, 20/10, Noel) hoặc bấm phát động chiến dịch ngay</p>
+        </div>
+        <button onclick="openHolidayModal()" class="bg-zalo-500 hover:bg-zalo-600 text-white font-semibold text-xs sm:text-sm px-4 py-2 rounded-lg shadow transition">
+          + Thêm Ngày Lễ / Sự kiện mới
+        </button>
+      </div>
+
+      <div id="holidaysGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <!-- ================= TAB 4B: AUTO-REPLY BOT & AI CSKH ================= -->
+    <section id="tab-autoreply" class="tab-panel hidden space-y-6">
+      <!-- Top Config Card -->
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div class="flex items-center gap-3.5">
+            <img src="/icon-support.png" alt="Zalo Care Bot Support" class="w-13 h-13 rounded-xl border border-blue-200 shadow-xs object-contain bg-white p-0.5 shrink-0" />
+            <div>
+              <div class="flex items-center gap-2.5">
+                <h2 class="text-lg font-bold text-slate-800">Trợ lý AI CSKH & Trả lời Tự động trên Zalo</h2>
+                <span id="arListenerBadge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                  ● Đang hoạt động
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Kết hợp kịch bản từ khóa tốc độ cao với Trí tuệ nhân tạo (AI) tự đọc lịch sử tin nhắn Zalo và bắt chước giọng văn của bạn</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5">
+            <label class="flex items-center gap-2 cursor-pointer bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition">
+              <input type="checkbox" id="arEnabledToggle" onchange="saveAutoReplyConfigForm()" class="w-4 h-4 rounded text-zalo-500" />
+              <span class="text-xs sm:text-sm font-bold text-slate-800">Bật Trả lời Tự động</span>
+            </label>
+            <button onclick="openAutoReplyRuleModal()" class="bg-zalo-500 hover:bg-zalo-600 text-white font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl shadow transition">
+              + Thêm Kịch bản Từ khóa
+            </button>
+          </div>
+        </div>
+
+        <!-- Settings Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Phạm vi trả lời:</label>
+            <select id="arScope" onchange="saveAutoReplyConfigForm()" class="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-slate-300 bg-white">
+              <option value="private_only">👤 Chỉ tin nhắn Cá nhân 1-1 (Khuyên dùng)</option>
+              <option value="all">👥 Cả Cá nhân & Nhóm Zalo</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Khung giờ hoạt động:</label>
+            <select id="arWorkingHoursMode" onchange="saveAutoReplyConfigForm()" class="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-slate-300 bg-white">
+              <option value="always">🌐 Hoạt động 24/7 (Cả ngày)</option>
+              <option value="outside_hours">🌙 Chỉ trả lời khi Ngoài giờ hành chính</option>
+              <option value="custom_range">⏰ Chỉ trong khung giờ hành chính</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Giờ hành chính (Bắt đầu - Kết thúc):</label>
+            <div class="flex items-center gap-1.5">
+              <input type="time" id="arWorkStart" onchange="saveAutoReplyConfigForm()" value="08:00" class="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300" />
+              <span class="text-slate-400">-</span>
+              <input type="time" id="arWorkEnd" onchange="saveAutoReplyConfigForm()" value="18:00" class="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Độ trễ trả lời (giây):</label>
+              <input type="number" id="arDelaySeconds" onchange="saveAutoReplyConfigForm()" min="1" max="30" value="3" class="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-slate-300" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Chống lặp (phút):</label>
+              <input type="number" id="arCooldownMinutes" onchange="saveAutoReplyConfigForm()" min="1" max="1440" value="60" class="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-slate-300" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= AI BRAIN & CONVERSATION LEARNING STUDIO ================= -->
+      <div class="bg-gradient-to-br from-indigo-950 via-slate-900 to-blue-950 rounded-2xl p-5 sm:p-6 shadow-lg border border-indigo-500/30 text-white space-y-5">
+        <!-- AI Header -->
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+          <div class="flex items-center gap-3.5">
+            <div class="w-14 h-14 rounded-2xl bg-white p-1 flex items-center justify-center shadow-md shrink-0">
+              <img src="/zalo-care-bot-mascot-3d.png" alt="Zalo Care Bot 3D Mascot" class="w-full h-full object-contain" />
+            </div>
+            <div>
+              <div class="flex flex-wrap items-center gap-2.5">
+                <h3 class="text-base sm:text-lg font-extrabold text-white">Bộ Não AI Chăm Sóc Khách Hàng & Tự Học Giọng Văn Zalo</h3>
+                <span id="aiStatusBadge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+                  ● AI Đang Bật & Tự Học
+                </span>
+              </div>
+              <p class="text-xs text-blue-200/80 mt-0.5">
+                AI tự động đọc dữ liệu hội thoại bạn nhắn trên Zalo để học cách xưng hô, từ ngữ quen dùng và trả lời tư vấn khách hàng như người thật
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5">
+            <button onclick="syncZaloHistoryForAi()" id="btnSyncZaloAiHistory" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-1.5">
+              <span>📥 Quét & Học từ Lịch sử Tin nhắn Zalo</span>
+            </button>
+            <label class="flex items-center gap-2 cursor-pointer bg-white/10 hover:bg-white/15 px-3.5 py-2 rounded-xl border border-white/15 transition">
+              <input type="checkbox" id="aiEnabledToggle" onchange="saveAiConfigForm()" checked class="w-4 h-4 rounded text-amber-400" />
+              <span class="text-xs sm:text-sm font-bold text-white">Bật AI Tư vấn</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- AI Model & Behavior Settings Row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          <div class="bg-white/5 p-3.5 rounded-xl border border-white/10">
+            <label class="block text-xs font-bold text-amber-300 mb-1.5">1. Động cơ Trí tuệ Nhân tạo (AI Engine):</label>
+            <select id="aiProviderSelect" onchange="saveAiConfigForm()" class="w-full text-xs sm:text-sm px-3 py-2 rounded-lg bg-slate-800 border border-slate-600 text-white font-medium">
+              <option value="auto">⚡ Tự động (Gemini / OpenAI + AI Nội bộ)</option>
+              <option value="local_rag">🧠 AI Học Giọng Văn Nội Bộ (Miễn phí - Không cần Key)</option>
+              <option value="gemini">✨ Google Gemini AI (2.0 Flash / 1.5 Flash)</option>
+              <option value="openai">🌐 OpenAI ChatGPT (GPT-4o-mini)</option>
+            </select>
+            <p class="text-[11px] text-slate-300 mt-1.5">Hoạt động ngay lập tức kể cả khi chưa nhập API Key</p>
+          </div>
+
+          <div class="bg-white/5 p-3.5 rounded-xl border border-white/10">
+            <label class="block text-xs font-bold text-amber-300 mb-1.5">2. Chế độ Phối hợp Từ khóa & AI:</label>
+            <select id="aiReplyModeSelect" onchange="saveAiConfigForm()" class="w-full text-xs sm:text-sm px-3 py-2 rounded-lg bg-slate-800 border border-slate-600 text-white font-medium">
+              <option value="hybrid">🤝 Kết hợp: Ưu tiên Từ khóa -> AI trả lời câu còn lại</option>
+              <option value="ai_first">🚀 AI Toàn quyền: Dùng AI trả lời mọi tin nhắn khách gửi</option>
+            </select>
+            <p class="text-[11px] text-slate-300 mt-1.5">Giúp xử lý mượt mà mọi câu hỏi mở của khách hàng</p>
+          </div>
+
+          <div class="bg-white/5 p-3.5 rounded-xl border border-white/10 space-y-2">
+            <label class="block text-xs font-bold text-amber-300">3. Cơ chế Tự học & Nhường quyền thông minh:</label>
+            <label class="flex items-start gap-2 text-xs text-slate-200 cursor-pointer">
+              <input type="checkbox" id="aiAutoLearnRealtime" onchange="saveAiConfigForm()" checked class="mt-0.5 rounded text-amber-400" />
+              <span>📈 <strong>Tự học trực tiếp:</strong> Tự động học câu trả lời mỗi khi bạn nhắn tin cho khách trên Zalo</span>
+            </label>
+            <label class="flex items-start gap-2 text-xs text-slate-200 cursor-pointer">
+              <input type="checkbox" id="aiHumanTakeover" onchange="saveAiConfigForm()" checked class="mt-0.5 rounded text-amber-400" />
+              <span>⏸️ <strong>Nhường quyền (30 phút):</strong> Tạm dừng Bot ở cuộc hội thoại bạn đang trực tiếp cầm máy chat</span>
+            </label>
+          </div>
+
+          <div class="bg-white/5 p-3.5 rounded-xl border border-white/10 space-y-2">
+            <label class="block text-xs font-bold text-amber-300">4. Khóa API Nâng cao (Tùy chọn Gemini / OpenAI):</label>
+            <input type="password" id="aiGeminiKey" placeholder="🔑 Google Gemini API Key (AIzaSy...)" class="w-full text-xs px-2.5 py-1.5 rounded bg-slate-800 border border-slate-600 text-white font-mono" />
+            <div class="flex gap-1.5">
+              <input type="password" id="aiOpenaiKey" placeholder="🔑 OpenAI API Key (sk-...)" class="flex-1 text-xs px-2.5 py-1.5 rounded bg-slate-800 border border-slate-600 text-white font-mono" />
+              <button onclick="saveAiConfigForm()" class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded shadow shrink-0">
+                Lưu
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Two Columns: Left Style & Knowledge Base | Right Learned Conversation Memory -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 pt-1">
+          <!-- Left 6 cols: Style Profile & Knowledge Base -->
+          <div class="lg:col-span-6 space-y-4">
+            <div class="bg-white/5 rounded-xl p-4 border border-white/10 space-y-3">
+              <div class="flex items-center justify-between">
+                <h4 class="text-sm font-bold text-amber-300">🗣️ Phong cách & Giọng văn AI đã học từ bạn</h4>
+                <button onclick="saveAiConfigForm()" class="text-xs bg-white/10 hover:bg-white/20 text-white px-2.5 py-1 rounded font-semibold">💾 Cập nhật giọng văn</button>
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-blue-200 mb-1">Tóm tắt thói quen ngôn từ rút trích từ tin nhắn Zalo của bạn:</label>
+                <textarea id="aiLearnedStyleSummary" rows="2" class="w-full text-xs px-3 py-2 rounded-lg bg-slate-900/90 border border-slate-700 text-emerald-300 leading-relaxed"></textarea>
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-blue-200 mb-1">Hướng dẫn Vai trò & Nhân vật AI (System Persona):</label>
+                <textarea id="aiPersonaPrompt" rows="2" class="w-full text-xs px-3 py-2 rounded-lg bg-slate-900/90 border border-slate-700 text-slate-200 leading-relaxed"></textarea>
+              </div>
+            </div>
+
+            <!-- Knowledge Base Docs -->
+            <div class="bg-white/5 rounded-xl p-4 border border-white/10 space-y-3">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="text-sm font-bold text-amber-300">📚 Kho Kiến Thức Dịch Vụ & Bảng Giá (<span id="aiKnowledgeCount">0</span> mục)</h4>
+                  <p class="text-[11px] text-slate-300">Dữ liệu thực tế để AI đọc hiểu và tư vấn chính xác cho khách hàng</p>
+                </div>
+                <button onclick="toggleAddKnowledgeBox()" class="text-xs bg-blue-500 hover:bg-blue-600 text-white font-bold px-3 py-1.5 rounded-lg shadow">
+                  + Thêm Kiến Thức
+                </button>
+              </div>
+
+              <!-- Quick Add Knowledge Form -->
+              <div id="aiAddKnowledgeBox" class="hidden p-3 rounded-lg bg-slate-800/90 border border-slate-600 space-y-2">
+                <input type="text" id="aiKnowTitle" placeholder="Tiêu đề (VD: Bảng giá thiết kế nội thất 2026)" class="w-full text-xs px-3 py-1.5 rounded bg-slate-900 border border-slate-700 text-white" />
+                <input type="text" id="aiKnowTags" placeholder="Từ khóa liên quan (VD: nội thất, báo giá, chung cư)" class="w-full text-xs px-3 py-1.5 rounded bg-slate-900 border border-slate-700 text-white" />
+                <textarea id="aiKnowContent" rows="3" placeholder="Nhập thông tin chi tiết dịch vụ, chính sách, quy trình để AI trả lời khách..." class="w-full text-xs px-3 py-1.5 rounded bg-slate-900 border border-slate-700 text-white"></textarea>
+                <div class="flex justify-end gap-2">
+                  <button onclick="toggleAddKnowledgeBox()" class="text-xs px-3 py-1 rounded bg-slate-700 text-slate-300">Đóng</button>
+                  <button onclick="saveAiKnowledgeDocForm()" class="text-xs font-bold px-3 py-1 rounded bg-amber-400 text-slate-950">Lưu vào Bộ nhớ AI</button>
+                </div>
+              </div>
+
+              <div id="aiKnowledgeList" class="space-y-2 max-h-[230px] overflow-y-auto pr-1">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Right 6 cols: Learned Conversation Memory Pairs -->
+          <div class="lg:col-span-6 bg-white/5 rounded-xl p-4 border border-white/10 flex flex-col justify-between space-y-3">
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="text-sm font-bold text-amber-300">💬 Bộ Nhớ Hội Thoại Mẫu Đã Học (<span id="aiLearnedPairsCount">0</span> cặp câu)</h4>
+                  <p class="text-[11px] text-slate-300">Các cặp <em>[Khách hỏi] ➔ [Bạn trả lời]</em> được AI học từ Zalo hoặc do bạn dạy trực tiếp</p>
+                </div>
+              </div>
+
+              <!-- Teach a new conversation pair -->
+              <div class="p-3 rounded-lg bg-slate-800/80 border border-slate-700 space-y-2">
+                <p class="text-[11px] font-bold text-emerald-300">✍️ Dạy nhanh cho AI một tình huống giao tiếp mẫu của bạn:</p>
+                <input type="text" id="aiTeachQuestion" placeholder="Khi khách nhắn hỏi: (VD: Bên anh có thiết kế nhà phố trọn gói không?)" class="w-full text-xs px-3 py-1.5 rounded bg-slate-900 border border-slate-700 text-white" />
+                <div class="flex gap-2">
+                  <input type="text" id="aiTeachAnswer" placeholder="Cách bạn trả lời: (VD: Dạ bên em có nhận thiết kế & thi công trọn gói anh nhé...)" class="flex-1 text-xs px-3 py-1.5 rounded bg-slate-900 border border-slate-700 text-white" />
+                  <button onclick="teachNewAiPair()" class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg shadow shrink-0">
+                    + Dạy AI
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Learned pairs scrollable list -->
+            <div id="aiLearnedPairsList" class="space-y-2 max-h-[300px] overflow-y-auto pr-1 flex-1">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Grid: Left 7 cols Rules, Right 5 cols Live Simulator & Logs -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left 7 Cols: Keyword Rules List -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-slate-800">📋 Danh sách Kịch bản & Từ khóa Tự động</h3>
+            <span class="text-xs text-slate-500">Ưu tiên khớp từ khóa cụ thể trước, sau đó chuyển cho Bộ não AI tư vấn</span>
+          </div>
+          <div id="autoReplyRulesList" class="space-y-3">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Right 5 Cols: Live Auto-Reply Chat Simulator & Logs -->
+        <div class="lg:col-span-5 space-y-6">
+          <!-- Simulator Box -->
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-4 py-3 bg-[#0068FF] text-white flex items-center justify-between">
+              <div>
+                <p class="text-sm font-bold">💬 Phòng Thử Nghiệm Bot & AI Tư Vấn</p>
+                <p class="text-[11px] text-blue-100">Giả lập khách hàng nhắn tin đến để kiểm tra cả Từ khóa lẫn AI học giọng văn</p>
+              </div>
+              <span class="text-[11px] bg-white/20 px-2 py-0.5 rounded">Test AI & Bot</span>
+            </div>
+
+            <div class="p-4 space-y-3 bg-slate-50 border-b border-slate-200">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Giả lập người nhắn là:</label>
+                <select id="arSimCustomerSelect" class="w-full text-xs sm:text-sm px-3 py-1.5 rounded-lg border border-slate-300 bg-white"></select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Bấm chọn nhanh câu thử nghiệm:</label>
+                <div class="flex flex-wrap gap-1.5">
+                  <button onclick="setArSimInput('Tư vấn giúp anh thiết kế biệtự 2 tầng diện tích 10x20m nhé', true)" class="text-[11px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full border border-indigo-200 font-semibold">🧠 "Tư vấn thiết kế biệt thự 2 tầng"</button>
+                  <button onclick="setArSimInput('Bên mình quy trình làm hồ sơ thiết kế và thời gian bao lâu vậy em?', true)" class="text-[11px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full border border-indigo-200 font-semibold">🧠 "Quy trình & thời gian thiết kế?"</button>
+                  <button onclick="setArSimInput('Cảm ơn anh nhiều nhé, thiệp đẹp quá!', false)" class="text-[11px] bg-white hover:bg-blue-50 text-zalo-600 px-2.5 py-1 rounded-full border border-blue-200 font-medium">"Cảm ơn anh nhiều nhé!"</button>
+                  <button onclick="setArSimInput('Cho mình xin bảng báo giá thiết kế với', false)" class="text-[11px] bg-white hover:bg-blue-50 text-zalo-600 px-2.5 py-1 rounded-full border border-blue-200 font-medium">"Xin bảng báo giá"</button>
+                </div>
+              </div>
+
+              <div class="flex gap-1.5">
+                <input type="text" id="arSimInputText" placeholder="Nhập câu hỏi bất kỳ của khách hàng..." value="Tư vấn giúp anh thiết kế biệtự 2 tầng diện tích 10x20m nhé" class="flex-1 text-xs sm:text-sm px-3 py-2 rounded-lg border border-slate-300 bg-white" />
+                <button onclick="runAutoReplySim(false, false)" class="bg-zalo-500 hover:bg-zalo-600 text-white text-xs font-bold px-3 py-2 rounded-lg shadow shrink-0">
+                  Thử Bot
+                </button>
+                <button onclick="runAutoReplySim(false, true)" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-2 rounded-lg shadow shrink-0">
+                  🧠 Thử AI
+                </button>
+              </div>
+            </div>
+
+            <!-- Simulated Chat Conversation -->
+            <div id="arSimResultArea" class="zalo-chat-bg p-4 space-y-3 min-h-[210px] flex flex-col justify-end">
+              <div class="text-center text-xs text-slate-400 py-8">
+                Bấm <strong>"Thử Phản Hồi"</strong> để xem Bot tự động nhận diện từ khóa và trả lời khách hàng.
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Auto-Reply Activity Logs -->
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+              <h4 class="font-bold text-sm text-slate-800">⚡ Nhật ký Phản hồi Tự động gần đây</h4>
+              <button onclick="loadAutoReplyTab()" class="text-xs text-zalo-600 hover:underline">Làm mới</button>
+            </div>
+            <div id="arRecentLogsList" class="divide-y divide-slate-100 max-h-[300px] overflow-y-auto">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 5: ZALO SETTINGS & CRON ================= -->
+    <section id="tab-settings" class="tab-panel hidden space-y-6">
+      <!-- Mode Selector Banner -->
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 space-y-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-800">🔌 Chọn Phương thức Kết nối Gửi Tin nhắn Zalo</h2>
+          <p class="text-xs text-slate-500">Hỗ trợ linh hoạt cả 3 chế độ: Chạy thử nghiệm (Mock), Zalo Cá nhân (Quét mã QR) và Zalo Official Account (OA / ZNS Doanh nghiệp)</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div onclick="selectZaloMode('mock')" id="modeCard-mock" class="cursor-pointer rounded-xl p-4 border-2 transition">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-bold text-sm text-slate-800">🧪 Chế độ Chạy thử (Mock Sandbox)</span>
+              <span class="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold">Khuyên dùng thử ngay</span>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed">Tạo ảnh thiệp thật và mô phỏng gửi tin nhắn ngay trên Dashboard mà không cần đăng nhập tài khoản Zalo thật.</p>
+          </div>
+
+          <div onclick="selectZaloMode('personal')" id="modeCard-personal" class="cursor-pointer rounded-xl p-4 border-2 transition">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-bold text-sm text-slate-800">📱 Zalo Cá Nhân (QR / Cookie)</span>
+              <span class="text-xs px-2 py-0.5 rounded bg-blue-100 text-zalo-600 font-semibold">Miễn phí & Linh hoạt</span>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed">Quét mã QR hoặc dùng Cookie tài khoản Zalo cá nhân để tự động tìm SĐT và gửi tin nhắn kèm ảnh thiệp.</p>
+          </div>
+
+          <div onclick="selectZaloMode('oa')" id="modeCard-oa" class="cursor-pointer rounded-xl p-4 border-2 transition">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-bold text-sm text-slate-800">🏢 Zalo OA / ZNS (Doanh nghiệp)</span>
+              <span class="text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">API Chính thống</span>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed">Kết nối qua Zalo Official Account API V3 hoặc gửi tin ZNS trực tiếp đến số điện thoại khách hàng.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Left: Brand & Automated Schedule Settings -->
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 space-y-4">
+          <h3 class="text-base font-bold text-slate-800 border-b border-slate-100 pb-2.5">⏰ Cấu hình Thương hiệu & Hẹn giờ Tự động (Cron)</h3>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Tên Thương hiệu / Cửa hàng ({ten_thuong_hieu}):</label>
+              <input type="text" id="setBrandName" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Xưng hô của người gửi ({xung_em}):</label>
+              <input type="text" id="setSenderPronoun" placeholder="em / mình / cháu / shop" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Số Hotline CSKH ({sdt_hotline}):</label>
+              <input type="text" id="setHotline" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Độ trễ giữa 2 tin nhắn (ms - chống khóa nick):</label>
+              <input type="number" id="setDelayMs" step="500" min="1000" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="flex items-center gap-2 text-sm font-bold text-slate-800 cursor-pointer">
+                <input type="checkbox" id="setCronEnabled" class="w-4 h-4 rounded text-zalo-500" />
+                <span>Bật tự động quét & chúc mừng hàng ngày</span>
+              </label>
+              <input type="time" id="setCronTime" class="text-sm font-bold px-3 py-1.5 rounded-lg border border-slate-300 bg-white" />
+            </div>
+            <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+              <input type="checkbox" id="setSendCard" class="w-4 h-4 rounded text-zalo-500" />
+              <span>🖼️ Tự động tạo và đính kèm ảnh Thiệp chúc mừng (PNG) vào tin nhắn</span>
+            </label>
+          </div>
+
+          <button onclick="saveAllSettings()" class="w-full bg-zalo-500 hover:bg-zalo-600 text-white font-semibold text-sm py-2.5 rounded-lg shadow transition">
+            💾 Lưu Cấu Hình Chung & Lịch Hẹn Giờ
+          </button>
+
+          <!-- Share / Clone Clean Package Card -->
+          <div class="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-blue-50 border border-emerald-200 space-y-3">
+            <div class="flex items-start gap-3">
+              <img src="/logo-app.png" alt="Zalo Care Bot" class="w-11 h-11 rounded-xl bg-white p-1 border border-blue-200 shadow-xs shrink-0 object-contain" />
+              <div>
+                <h4 class="text-xs sm:text-sm font-bold text-slate-900">📦 Bộ Cài Đặt &amp; Chia sẻ Ứng dụng Zalo Care Bot</h4>
+                <p class="text-[11px] text-slate-600 mt-0.5">
+                  Đã tích hợp sẵn Logo, Banner 3D &amp; Bộ não AI tự học giọng văn (đã tự động xóa phiên đăng nhập riêng của bạn). Gửi file <strong>Setup.exe</strong> hoặc <strong>.ZIP</strong> này cho máy tính khác để cài đặt ngay:
+                </p>
+              </div>
+            </div>
+            <div class="rounded-lg overflow-hidden border border-slate-200 shadow-xs bg-white">
+              <img src="/ui-preview.png" alt="Giao diện phần mềm Zalo Care Bot" class="w-full h-auto object-cover" />
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <a href="/ZaloCare-Bot-Setup.exe" download="Zalo-Care-Bot-Setup.exe" class="bg-zalo-500 hover:bg-zalo-600 text-white text-xs font-bold px-3.5 py-2 rounded-lg shadow transition">
+                💿 Tải Bộ Cài Đặt Zalo Care Bot (.EXE)
+              </a>
+              <a href="/ZaloCare-Bot-Ban-Chia-Se.zip" download="Zalo-Care-Bot-Ban-Chia-Se.zip" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2 rounded-lg shadow transition">
+                📥 Tải Bản Nén Sạch (.ZIP)
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Zalo Personal QR / Cookie AND Zalo OA Credentials -->
+        <div class="space-y-6">
+          <!-- Zalo Personal Box -->
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <div>
+                <h3 class="text-base font-bold text-slate-800">📱 Kết nối Zalo Cá Nhân (zca-js)</h3>
+                <p id="personalStatusText" class="text-xs text-slate-500">Quét mã QR bằng ứng dụng Zalo trên điện thoại hoặc nhập Cookie</p>
+              </div>
+              <button onclick="startPersonalQrLogin()" class="bg-zalo-500 hover:bg-zalo-600 text-white text-xs font-semibold px-3.5 py-2 rounded-lg shadow transition">
+                📷 Tạo Mã QR Đăng Nhập
+              </button>
+            </div>
+
+            <!-- QR Display Area -->
+            <div id="qrCodeBox" class="hidden p-4 rounded-xl bg-blue-50/70 border border-blue-200 text-center space-y-2">
+              <p id="qrInstructionText" class="text-xs font-semibold text-zalo-700">Mở ứng dụng Zalo trên điện thoại -> Quét mã QR bên dưới:</p>
+              <div class="flex justify-center">
+                <img id="qrImageElem" src="" alt="Zalo QR Code" class="w-48 h-48 rounded-xl border-4 border-white shadow-md bg-white object-contain" />
+              </div>
+            </div>
+
+            <!-- Manual Cookie/IMEI Fallback -->
+            <details class="text-xs">
+              <summary class="cursor-pointer font-semibold text-slate-600 hover:text-zalo-600">Hoặc đăng nhập nâng cao bằng Cookie & IMEI (Zalo Web)</summary>
+              <div class="mt-3 space-y-2.5">
+                <div>
+                  <label class="block font-semibold text-slate-600 mb-1">Zalo IMEI (`z_uuid`):</label>
+                  <input type="text" id="setPersonalImei" placeholder="VD: 550e8400-e29b-41d4-a716-..." class="w-full px-3 py-1.5 rounded border border-slate-300" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-600 mb-1">Cookie JSON (Xuất từ J2Team Cookies / Extension):</label>
+                  <textarea id="setPersonalCookie" rows="3" placeholder='[{"domain":".zalo.me","name":"zpw_sek","value":"..."}]' class="w-full px-3 py-1.5 rounded border border-slate-300 font-mono text-[11px]"></textarea>
+                </div>
+                <div class="flex gap-2">
+                  <button onclick="loginPersonalWithCookie()" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold px-3.5 py-1.5 rounded-lg">
+                    Kết nối bằng Cookie
+                  </button>
+                  <button onclick="disconnectPersonalZalo()" class="border border-rose-300 text-rose-600 hover:bg-rose-50 font-semibold px-3 py-1.5 rounded-lg">
+                    Ngắt kết nối
+                  </button>
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <!-- Zalo OA / ZNS Box -->
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+              <h3 class="text-base font-bold text-slate-800">🏢 Cấu hình Zalo Official Account (OA / ZNS)</h3>
+              <button onclick="refreshOaToken()" class="text-xs font-semibold text-zalo-600 hover:underline">🔄 Làm mới Access Token</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Zalo OA Access Token:</label>
+                <input type="password" id="setOaAccessToken" placeholder="Nhập OA Access Token..." class="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 font-mono" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">App ID (tùy chọn để tự động Refresh):</label>
+                <input type="text" id="setOaAppId" class="w-full text-xs px-3 py-2 rounded-lg border border-slate-300" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Secret Key:</label>
+                <input type="password" id="setOaSecretKey" class="w-full text-xs px-3 py-2 rounded-lg border border-slate-300" />
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Refresh Token:</label>
+                <input type="password" id="setOaRefreshToken" class="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 font-mono" />
+              </div>
+            </div>
+            <div class="pt-1 space-y-2">
+              <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                <input type="checkbox" id="setOaUseZns" class="rounded text-zalo-500" />
+                <span>Gửi qua dịch vụ ZNS (Zalo Notification Service) theo Số điện thoại</span>
+              </label>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input type="text" id="setZnsBirthdayTpl" placeholder="Mã ZNS Template Sinh nhật (VD: 248901)" class="text-xs px-3 py-1.5 rounded border border-slate-300" />
+                <input type="text" id="setZnsHolidayTpl" placeholder="Mã ZNS Template Lễ Tết (VD: 248905)" class="text-xs px-3 py-1.5 rounded border border-slate-300" />
+              </div>
+            </div>
+            <button onclick="saveAllSettings()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs py-2 rounded-lg transition">
+              Lưu Cấu Hình Zalo OA / ZNS
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 6: MESSAGE LOGS ================= -->
+    <section id="tab-logs" class="tab-panel hidden space-y-4">
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-slate-800">📜 Nhật ký Gửi Tin nhắn & Thiệp chúc mừng</h2>
+          <p class="text-xs text-slate-500">Lưu trữ toàn bộ lịch sử gửi tự động và thủ công kèm ảnh thiệp đã tạo</p>
+        </div>
+        <button onclick="loadLogs()" class="text-xs font-semibold px-3.5 py-2 rounded-lg border border-slate-300 hover:bg-slate-50">
+          🔄 Làm mới
+        </button>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold">
+                <th class="py-3.5 px-4">Thời gian</th>
+                <th class="py-3.5 px-4">Khách hàng</th>
+                <th class="py-3.5 px-4">Dịp chúc mừng</th>
+                <th class="py-3.5 px-4">Phương thức</th>
+                <th class="py-3.5 px-4">Trạng thái</th>
+                <th class="py-3.5 px-4 text-right">Chi tiết / Thiệp</th>
+              </tr>
+            </thead>
+            <tbody id="logsTableBody" class="divide-y divide-slate-100 text-sm">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= MODAL: ADD / EDIT CUSTOMER ================= -->
+  <div id="customerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
+      <div class="px-5 py-4 bg-slate-800 text-white flex items-center justify-between">
+        <h3 id="customerModalTitle" class="font-bold text-base">Thêm Khách hàng mới</h3>
+        <button onclick="closeCustomerModal()" class="text-slate-300 hover:text-white text-xl leading-none">&times;</button>
+      </div>
+      <div class="p-5 space-y-3.5">
+        <input type="hidden" id="custId" />
+        <div class="grid grid-cols-12 gap-3">
+          <div class="col-span-3">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Xưng hô *</label>
+            <select id="custSalutation" onchange="onCustSalutationChange(this.value)" class="w-full text-sm px-2.5 py-2 rounded-lg border border-slate-300 bg-white">
+              <option value="Anh">Anh</option>
+              <option value="Chị">Chị</option>
+              <option value="Cô">Cô</option>
+              <option value="Chú">Chú</option>
+              <option value="Bác">Bác</option>
+              <option value="Bạn">Bạn</option>
+            </select>
+          </div>
+          <div class="col-span-6">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Họ và tên khách hàng *</label>
+            <input type="text" id="custFullName" placeholder="VD: Nguyễn Minh Tuấn" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+          </div>
+          <div class="col-span-3">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Giới tính *</label>
+            <select id="custGender" onchange="onCustGenderChange(this.value)" class="w-full text-sm px-2.5 py-2 rounded-lg border border-slate-300 bg-white">
+              <option value="male">👨 Nam</option>
+              <option value="female">👩 Nữ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Số điện thoại Zalo *</label>
+            <input type="text" id="custPhone" placeholder="VD: 0912345678" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Nhóm khách hàng</label>
+            <select id="custGroup" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300 bg-white">
+              <option value="VIP">VIP</option>
+              <option value="Thân thiết">Thân thiết</option>
+              <option value="Doanh nghiệp">Doanh nghiệp</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">🎂 Ngày sinh (Dương lịch)</label>
+            <input type="date" id="custBirthday" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">💎 Ngày kỷ niệm</label>
+            <input type="date" id="custAnniversaryDate" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Tên dịp kỷ niệm</label>
+            <input type="text" id="custAnniversaryType" placeholder="Kỷ niệm đồng hành / Ngày cưới..." class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Zalo UID (Tùy chọn)</label>
+            <input type="text" id="custZaloUid" placeholder="Tự động lấy hoặc nhập UID" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Ghi chú</label>
+          <input type="text" id="custNotes" placeholder="Ghi chú sở thích, lưu ý..." class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+        </div>
+      </div>
+      <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+        <button onclick="closeCustomerModal()" class="text-sm font-medium px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100">Hủy</button>
+        <button onclick="saveCustomerForm()" class="text-sm font-semibold px-5 py-2 rounded-lg bg-zalo-500 hover:bg-zalo-600 text-white shadow">Lưu Khách Hàng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: QUICK SEND & PREVIEW ================= -->
+  <div id="sendModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
+      <div class="px-5 py-3.5 bg-[#0068FF] text-white flex items-center justify-between">
+        <h3 id="sendModalTitle" class="font-bold text-base">Gửi Thiệp & Lời chúc Zalo</h3>
+        <button onclick="closeSendModal()" class="text-blue-100 hover:text-white text-xl leading-none">&times;</button>
+      </div>
+      <div class="p-5 overflow-y-auto space-y-4 flex-1">
+        <input type="hidden" id="sendCustomerId" />
+        <input type="hidden" id="sendOccasionKey" />
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Chọn Mẫu lời chúc & Thiệp:</label>
+            <select id="sendTemplateSelect" onchange="refreshQuickSendPreview()" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300 bg-white"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Tên Dịp chúc mừng ({ten_dip_le}):</label>
+            <input type="text" id="sendHolidayName" oninput="refreshQuickSendPreview()" placeholder="VD: Sinh nhật / Tết Nguyên Đán" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+          </div>
+        </div>
+
+        <div id="sendModalCardPreview" class="card-svg-container rounded-xl overflow-hidden bg-slate-900"></div>
+
+        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+          <p class="text-xs font-bold text-slate-500 uppercase mb-1">Nội dung tin nhắn sẽ gửi:</p>
+          <p id="sendModalTextPreview" class="text-xs sm:text-sm text-slate-800 whitespace-pre-line leading-relaxed"></p>
+        </div>
+      </div>
+      <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+        <span class="text-xs text-slate-500">Thiệp PNG & lời chúc sẽ được gửi qua cấu hình Zalo đang chọn</span>
+        <div class="flex gap-2">
+          <button onclick="closeSendModal()" class="text-sm font-medium px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100">Đóng</button>
+          <button onclick="confirmQuickSend()" id="btnConfirmQuickSend" class="text-sm font-semibold px-5 py-2 rounded-lg bg-zalo-500 hover:bg-zalo-600 text-white shadow flex items-center gap-1.5">
+            <span>🚀 Gửi Tin Nhắn & Thiệp Ngay</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: ADD / EDIT HOLIDAY ================= -->
+  <div id="holidayModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+      <div class="px-5 py-4 bg-slate-800 text-white flex items-center justify-between">
+        <h3 class="font-bold text-base">Thêm / Cập nhật Ngày Lễ & Sự kiện</h3>
+        <button onclick="closeHolidayModal()" class="text-slate-300 hover:text-white text-xl leading-none">&times;</button>
+      </div>
+      <div class="p-5 space-y-3.5">
+        <input type="hidden" id="holId" />
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Tên Ngày Lễ / Tết / Sự kiện *</label>
+          <input type="text" id="holName" placeholder="VD: Ngày Quốc tế Phụ nữ 8/3" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Ngày - Tháng (MM-DD) *</label>
+            <input type="text" id="holMonthDay" placeholder="VD: 03-08 hoặc 10-20" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Đối tượng khách nhận</label>
+            <select id="holAudience" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300 bg-white">
+              <option value="all">Tất cả khách hàng</option>
+              <option value="female">Chỉ Khách Nữ (Chị/Cô)</option>
+              <option value="male">Chỉ Khách Nam (Anh/Chú)</option>
+              <option value="vip">Chỉ Khách VIP</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Mẫu lời chúc & Thiệp sử dụng</label>
+          <select id="holTemplateId" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300 bg-white"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Mô tả ngắn</label>
+          <input type="text" id="holDesc" placeholder="Ghi chú cho sự kiện này..." class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+        </div>
+      </div>
+      <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+        <button onclick="closeHolidayModal()" class="text-sm font-medium px-4 py-2 rounded-lg border border-slate-300">Hủy</button>
+        <button onclick="saveHolidayForm()" class="text-sm font-semibold px-5 py-2 rounded-lg bg-zalo-500 hover:bg-zalo-600 text-white shadow">Lưu Ngày Lễ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: ZALO CONTACTS SYNC ================= -->
+  <div id="zaloSyncModal" class="fixed inset-0 bg-slate-900/65 backdrop-blur-xs z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-5xl w-full shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
+      <!-- Modal Header -->
+      <div class="px-5 py-4 bg-gradient-to-r from-[#0052cc] to-[#0068FF] text-white flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 class="font-bold text-base sm:text-lg flex items-center gap-2">
+            <span>🔄 Đồng bộ Danh bạ Bạn bè & Khách hàng từ Zalo</span>
+          </h3>
+          <p id="zaloSyncSourceLabel" class="text-xs text-blue-100 mt-0.5">
+            Tự động lấy danh sách bạn bè, tên gợi nhớ (Alias), giới tính (Anh/Chị), ngày sinh và thẻ phân loại từ Zalo của bạn
+          </p>
+        </div>
+        <button onclick="closeZaloSyncModal()" class="text-blue-100 hover:text-white text-2xl leading-none">&times;</button>
+      </div>
+
+      <!-- Source Controls & Filter Toolbar -->
+      <div class="p-4 bg-slate-50 border-b border-slate-200 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <label class="text-xs font-bold text-slate-600">Nguồn danh bạ:</label>
+            <select id="zaloSyncSourceSelect" onchange="fetchContactsForSyncModal(this.value)" class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-lg border border-slate-300 bg-white">
+              <option value="auto">⚡ Tự động (Ưu tiên Zalo đã kết nối)</option>
+              <option value="personal">📱 Danh bạ Zalo Cá nhân thật (Bạn bè & Ngày sinh)</option>
+              <option value="oa">🏢 Người quan tâm Zalo OA</option>
+              <option value="mock">🧪 Danh bạ Zalo Mẫu (Chạy thử nghiệm)</option>
+            </select>
+            <button onclick="fetchContactsForSyncModal(document.getElementById('zaloSyncSourceSelect').value)" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 transition">
+              🔄 Tải lại danh bạ
+            </button>
+            <button onclick="closeZaloSyncModal(); switchTab('settings'); startPersonalQrLogin();" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-100 text-zalo-700 hover:bg-blue-200 transition">
+              📷 Quét mã QR Kết nối Zalo Cá nhân
+            </button>
+          </div>
+
+          <div class="flex items-center gap-3 text-xs font-semibold">
+            <span class="px-2.5 py-1 rounded-full bg-slate-200 text-slate-700">Tổng: <strong id="syncTotalCount">0</strong></span>
+            <span class="px-2.5 py-1 rounded-full bg-rose-100 text-rose-700">🎂 Có ngày sinh: <strong id="syncBirthdayCount">0</strong></span>
+            <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">✓ Đang chọn: <strong id="syncSelectedCount">0</strong></span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="flex-1 min-w-[200px]">
+            <input type="text" id="syncSearchInput" oninput="renderZaloSyncTable()" placeholder="🔍 Tìm bạn bè theo tên Zalo, tên gợi nhớ, SĐT..." class="w-full text-xs sm:text-sm px-3 py-1.5 rounded-lg border border-slate-300 bg-white" />
+          </div>
+          <select id="syncLabelFilter" onchange="renderZaloSyncTable()" class="text-xs sm:text-sm px-3 py-1.5 rounded-lg border border-slate-300 bg-white">
+            <option value="">Tất cả Thẻ phân loại Zalo</option>
+          </select>
+          <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-slate-300">
+            <input type="checkbox" id="syncOnlyBirthday" onchange="renderZaloSyncTable()" class="rounded text-zalo-500" />
+            <span>🎂 Chỉ hiện người có Ngày sinh</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Contacts Table -->
+      <div class="flex-1 overflow-y-auto">
+        <table class="w-full text-left border-collapse">
+          <thead class="sticky top-0 bg-slate-100 border-b border-slate-200 text-xs uppercase text-slate-600 font-bold z-10">
+            <tr>
+              <th class="py-3 px-4 w-10">
+                <input type="checkbox" id="syncSelectAllCheckbox" onchange="toggleSelectAllSyncContacts(this.checked)" checked class="w-4 h-4 rounded text-zalo-500" />
+              </th>
+              <th class="py-3 px-3">Bạn bè Zalo / Tên gợi nhớ</th>
+              <th class="py-3 px-3">Xưng hô</th>
+              <th class="py-3 px-3">SĐT / Zalo UID</th>
+              <th class="py-3 px-3">🎂 Ngày sinh (Từ Zalo)</th>
+              <th class="py-3 px-3">Nhóm / Thẻ Zalo</th>
+              <th class="py-3 px-3">Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody id="zaloSyncTableBody" class="divide-y divide-slate-100 text-xs sm:text-sm">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <p class="text-xs text-slate-500">
+          💡 <strong>Mẹo:</strong> Bạn có thể sửa trực tiếp <em>Xưng hô (Anh/Chị/Cô/Chú)</em> hoặc <em>Ngày sinh</em> ngay trên bảng trước khi bấm Đồng bộ.
+        </p>
+        <div class="flex items-center gap-2">
+          <button onclick="closeZaloSyncModal()" class="text-sm font-medium px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100">Đóng</button>
+          <button onclick="confirmSyncZaloContacts()" id="btnConfirmZaloSync" class="text-sm font-bold px-5 py-2 rounded-lg bg-zalo-500 hover:bg-zalo-600 text-white shadow flex items-center gap-1.5">
+            <span>✅ Đồng bộ các liên hệ đã chọn</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: ADD / EDIT AUTO-REPLY RULE ================= -->
+  <div id="autoReplyRuleModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
+      <div class="px-5 py-4 bg-slate-800 text-white flex items-center justify-between">
+        <h3 id="arRuleModalTitle" class="font-bold text-base">Thêm / Cập nhật Kịch bản Trả lời Tự động</h3>
+        <button onclick="closeAutoReplyRuleModal()" class="text-slate-300 hover:text-white text-xl leading-none">&times;</button>
+      </div>
+      <div class="p-5 space-y-3.5">
+        <input type="hidden" id="arRuleId" />
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Tên kịch bản trả lời *</label>
+          <input type="text" id="arRuleName" placeholder="VD: Khách hỏi Báo giá / Bảng giá" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Kiểu khớp tin nhắn</label>
+            <select id="arRuleMatchType" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300 bg-white">
+              <option value="contains">Chứa một trong các từ khóa</option>
+              <option value="exact">Khớp chính xác 100% từ khóa</option>
+              <option value="default_fallback">Mặc định (Khi không khớp từ khóa nào)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Độ ưu tiên (Số lớn ưu tiên trước)</label>
+            <input type="number" id="arRulePriority" value="8" min="1" max="100" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Danh sách từ khóa (Cách nhau bằng dấu phẩy `,`) *</label>
+          <input type="text" id="arRuleKeywords" placeholder="VD: báo giá, bảng giá, giá sao, tư vấn" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Chèn biến tự động xưng hô:</label>
+          <div class="flex flex-wrap gap-1.5 mb-2">
+            <button type="button" onclick="insertArVar('{xung_ho}')" class="text-xs bg-blue-50 hover:bg-blue-100 text-zalo-600 font-medium px-2 py-0.5 rounded border border-blue-200">{xung_ho} (Anh/Chị)</button>
+            <button type="button" onclick="insertArVar('{xung_ho_thuong}')" class="text-xs bg-blue-50 hover:bg-blue-100 text-zalo-600 font-medium px-2 py-0.5 rounded border border-blue-200">{xung_ho_thuong} (anh/chị)</button>
+            <button type="button" onclick="insertArVar('{ten}')" class="text-xs bg-blue-50 hover:bg-blue-100 text-zalo-600 font-medium px-2 py-0.5 rounded border border-blue-200">{ten}</button>
+            <button type="button" onclick="insertArVar('{xung_em}')" class="text-xs bg-blue-50 hover:bg-blue-100 text-zalo-600 font-medium px-2 py-0.5 rounded border border-blue-200">{xung_em}</button>
+            <button type="button" onclick="insertArVar('{ten_thuong_hieu}')" class="text-xs bg-blue-50 hover:bg-blue-100 text-zalo-600 font-medium px-2 py-0.5 rounded border border-blue-200">{ten_thuong_hieu}</button>
+            <button type="button" onclick="insertArVar('{sdt_hotline}')" class="text-xs bg-blue-50 hover:bg-blue-100 text-zalo-600 font-medium px-2 py-0.5 rounded border border-blue-200">{sdt_hotline}</button>
+          </div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nội dung câu trả lời tự động *</label>
+          <textarea id="arRuleReplyText" rows="4" placeholder="Dạ chào {xung_ho} {ten}! ..." class="w-full text-sm px-3 py-2 rounded-lg border border-slate-300 leading-relaxed"></textarea>
+        </div>
+
+        <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+          <input type="checkbox" id="arRuleActive" checked class="rounded text-zalo-500" />
+          <span>Kích hoạt kịch bản này ngay</span>
+        </label>
+      </div>
+      <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+        <button onclick="closeAutoReplyRuleModal()" class="text-sm font-medium px-4 py-2 rounded-lg border border-slate-300">Hủy</button>
+        <button onclick="saveAutoReplyRuleForm()" class="text-sm font-semibold px-5 py-2 rounded-lg bg-zalo-500 hover:bg-zalo-600 text-white shadow">Lưu Kịch Bản</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

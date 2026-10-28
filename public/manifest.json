@@ -1,0 +1,20 @@
+{
+  "name": "Zalo Care Bot",
+  "short_name": "Zalo Care Bot",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0068FF",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-app.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
